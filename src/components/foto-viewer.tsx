@@ -21,22 +21,30 @@ type Props = {
 };
 
 export function FotoViewer({ open, onOpenChange, titulo, fotos }: Props) {
-  const [loading, setLoading] = useState(true);
   const [urls, setUrls] = useState<Record<string, string | null>>({});
+  const [loadedKey, setLoadedKey] = useState<string>("");
+
+  const pathsKey = fotos.map((f) => f.path).join("|");
+  const loading = open && loadedKey !== pathsKey;
 
   useEffect(() => {
-    if (!open) return;
-    setLoading(true);
-    const paths = fotos.map((f) => f.path).filter((p) => !!p);
-    gerarSignedUrls(paths)
-      .then((res) => setUrls(res))
-      .finally(() => setLoading(false));
-  }, [open, fotos]);
+    if (!open || loadedKey === pathsKey) return;
+    let cancelled = false;
+    const paths = pathsKey.split("|").filter(Boolean);
+    gerarSignedUrls(paths).then((res) => {
+      if (cancelled) return;
+      setUrls(res);
+      setLoadedKey(pathsKey);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, pathsKey, loadedKey]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90vh] max-w-3xl flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle>Fotos do registro</DialogTitle>
           <DialogDescription>{titulo}</DialogDescription>
         </DialogHeader>
@@ -45,11 +53,16 @@ export function FotoViewer({ open, onOpenChange, titulo, fotos }: Props) {
             <Loader2 className="size-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="-mx-2 grid gap-4 overflow-y-auto px-2 sm:grid-cols-2 lg:grid-cols-3">
             {fotos.map((f) => {
               const url = urls[f.path];
               return (
-                <FotoCard key={f.label} label={f.label} url={url} path={f.path} />
+                <FotoCard
+                  key={f.label}
+                  label={f.label}
+                  url={url}
+                  path={f.path}
+                />
               );
             })}
           </div>
