@@ -77,6 +77,13 @@ export default async function AppLayout({
                 </Badge>
               </div>
               <DropdownMenuSeparator />
+              <DropdownMenuItem
+                render={<Link href="/perfil" />}
+                nativeButton={false}
+              >
+                Meu perfil
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <form action={logout}>
                 <DropdownMenuItem
                   render={<button type="submit" />}

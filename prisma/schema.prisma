@@ -27,6 +27,26 @@ model User {
   eventosCriados    Evento[]
   registrosCriados  Registro[]
   devolucoesCriadas Devolucao[]
+  auditLogs         AuditLog[]
+}
+
+// Log imutável de ações sensíveis. Sobrevive à deleção do ator
+// (FK SetNull + snapshot do nome) — preserva o histórico forense.
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorId    Int?
+  actorNome  String   // snapshot pra sobreviver à deleção do user
+  acao       String   // ex: "USER_DELETADO", "DEVOLUCAO_CANCELADA"
+  entidade   String   // "User" | "Evento" | "Registro" | "Devolucao"
+  entidadeId Int
+  resumo     String   // descrição curta pra UI
+  detalhes   Json?    // payload completo (antes/depois)
+  criadoEm   DateTime @default(now())
+
+  @@index([criadoEm])
+  @@index([actorId])
+  @@index([entidade, entidadeId])
 }
 
 model Evento {

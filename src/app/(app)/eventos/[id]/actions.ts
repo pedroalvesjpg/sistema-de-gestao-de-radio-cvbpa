@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guards";
+import { registrarAcao } from "@/lib/audit";
 
 type CriarRegistroInput = {
   modeloRadio: string;
@@ -54,7 +55,7 @@ export async function criarRegistro(eventoId: number, input: CriarRegistroInput)
   const parsed = validarRegistro(input);
   if (!parsed.ok) return { error: parsed.error } as const;
 
-  await prisma.registro.create({
+  const registro = await prisma.registro.create({
     data: {
       eventoId,
       ...parsed.data,
@@ -63,6 +64,15 @@ export async function criarRegistro(eventoId: number, input: CriarRegistroInput)
       urlFotoRadioSaida: "placeholder://radio-saida",
       criadoPorId: Number(session.user.id),
     },
+    select: { id: true },
+  });
+
+  await registrarAcao({
+    acao: "REGISTRO_CRIADO",
+    entidade: "Registro",
+    entidadeId: registro.id,
+    resumo: `Registrou saída de ${parsed.data.modeloRadio} #${parsed.data.codigoRadio} para ${parsed.data.nomeResponsavel} (${parsed.data.equipe}) no evento "${evento.nome}"`,
+    detalhes: { eventoId, ...parsed.data },
   });
 
   revalidatePath(`/eventos/${eventoId}`);
@@ -91,6 +101,24 @@ export async function editarRegistro(registroId: number, input: CriarRegistroInp
     data: parsed.data,
   });
 
+  await registrarAcao({
+    acao: "REGISTRO_EDITADO",
+    entidade: "Registro",
+    entidadeId: registroId,
+    resumo: `Editou registro ${parsed.data.modeloRadio} #${parsed.data.codigoRadio}`,
+    detalhes: {
+      antes: {
+        modeloRadio: registro.modeloRadio,
+        codigoRadio: registro.codigoRadio,
+        equipe: registro.equipe,
+        nomeResponsavel: registro.nomeResponsavel,
+        rgResponsavel: registro.rgResponsavel,
+        observacao: registro.observacao,
+      },
+      depois: parsed.data,
+    },
+  });
+
   revalidatePath(`/eventos/${registro.eventoId}`);
   return { ok: true } as const;
 }
@@ -101,7 +129,7 @@ export async function desvincularRegistro(registroId: number) {
 
   const registro = await prisma.registro.findUnique({
     where: { id: registroId },
-    include: { evento: true },
+    include: { evento: true, devolucao: true },
   });
   if (!registro) return { error: "Registro não encontrado." } as const;
   if (!isAdmin && registro.evento.dataFim < new Date()) {
@@ -123,6 +151,32 @@ export async function desvincularRegistro(registroId: number) {
     }
     throw e;
   }
+
+  await registrarAcao({
+    acao: "REGISTRO_DESVINCULADO",
+    entidade: "Registro",
+    entidadeId: registroId,
+    resumo: `Desvinculou ${registro.modeloRadio} #${registro.codigoRadio} de "${registro.evento.nome}"${registro.devolucao ? " (tinha devolução, foi apagada junto)" : ""}`,
+    detalhes: {
+      eventoId: registro.eventoId,
+      eventoNome: registro.evento.nome,
+      modeloRadio: registro.modeloRadio,
+      codigoRadio: registro.codigoRadio,
+      equipe: registro.equipe,
+      nomeResponsavel: registro.nomeResponsavel,
+      rgResponsavel: registro.rgResponsavel,
+      observacao: registro.observacao,
+      tinhaDevolucao: !!registro.devolucao,
+      devolucao: registro.devolucao
+        ? {
+            possuiAvaria: registro.devolucao.possuiAvaria,
+            devolvidoPor: registro.devolucao.devolvidoPor,
+            observacao: registro.devolucao.observacao,
+            criadoEm: registro.devolucao.criadoEm,
+          }
+        : null,
+    },
+  });
 
   revalidatePath(`/eventos/${registro.eventoId}`);
   return { ok: true } as const;
@@ -147,15 +201,33 @@ export async function criarDevolucao(registroId: number, input: CriarDevolucaoIn
     return { error: "Evento já encerrado." } as const;
   }
 
-  await prisma.devolucao.create({
+  const observacao = input.observacao?.trim() || null;
+  const devolvidoPor = input.devolvidoPor?.trim() || null;
+
+  const devolucao = await prisma.devolucao.create({
     data: {
       registroId,
       // TODO: upload real pro Supabase Storage; por enquanto placeholder.
       urlFotoRadioDevolucao: "placeholder://radio-devolucao",
       possuiAvaria: input.possuiAvaria,
-      observacao: input.observacao?.trim() || null,
-      devolvidoPor: input.devolvidoPor?.trim() || null,
+      observacao,
+      devolvidoPor,
       criadoPorId: Number(session.user.id),
+    },
+    select: { id: true },
+  });
+
+  await registrarAcao({
+    acao: "DEVOLUCAO_CRIADA",
+    entidade: "Devolucao",
+    entidadeId: devolucao.id,
+    resumo: `Marcou devolução de ${registro.modeloRadio} #${registro.codigoRadio}${input.possuiAvaria ? " (COM AVARIA)" : ""}`,
+    detalhes: {
+      registroId,
+      eventoId: registro.eventoId,
+      possuiAvaria: input.possuiAvaria,
+      devolvidoPor,
+      observacao,
     },
   });
 
@@ -179,7 +251,27 @@ export async function cancelarDevolucao(registroId: number) {
     return { error: "Evento já encerrado." } as const;
   }
 
+  const snapshot = {
+    registroId,
+    eventoId: registro.eventoId,
+    eventoNome: registro.evento.nome,
+    modeloRadio: registro.modeloRadio,
+    codigoRadio: registro.codigoRadio,
+    possuiAvaria: registro.devolucao.possuiAvaria,
+    devolvidoPor: registro.devolucao.devolvidoPor,
+    observacao: registro.devolucao.observacao,
+    criadoEmDevolucao: registro.devolucao.criadoEm,
+  };
+
   await prisma.devolucao.delete({ where: { registroId } });
+
+  await registrarAcao({
+    acao: "DEVOLUCAO_CANCELADA",
+    entidade: "Devolucao",
+    entidadeId: registro.devolucao.id,
+    resumo: `Cancelou devolução de ${registro.modeloRadio} #${registro.codigoRadio}${registro.devolucao.possuiAvaria ? " (que estava marcada com AVARIA)" : ""}`,
+    detalhes: snapshot,
+  });
 
   revalidatePath(`/eventos/${registro.eventoId}`);
   return { ok: true } as const;

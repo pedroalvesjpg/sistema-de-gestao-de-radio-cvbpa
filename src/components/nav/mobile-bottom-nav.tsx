@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, History, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MobileBottomNav({ isAdmin }: { isAdmin: boolean }) {
@@ -22,6 +22,12 @@ export function MobileBottomNav({ isAdmin }: { isAdmin: boolean }) {
             label: "Usuários",
             icon: Users,
             match: (p: string) => p.startsWith("/usuarios"),
+          },
+          {
+            href: "/auditoria",
+            label: "Auditoria",
+            icon: History,
+            match: (p: string) => p.startsWith("/auditoria"),
           },
         ]
       : []),

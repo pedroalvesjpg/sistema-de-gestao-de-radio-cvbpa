@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form";
 import { Logo } from "@/components/brand/logo";
 import { loginAction } from "./actions";
+import { Separator } from "@/components/ui/separator";
 
 const schema = z.object({
   email: z.string().email("Email inválido"),
@@ -52,16 +53,17 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   }
 
   return (
-    <Card className="w-full max-w-sm border-0 shadow-none lg:border lg:shadow-sm">
+    <Card className="w-full max-w-sm bg-card text-card-foreground shadow-2xl lg:shadow-sm">
       <CardHeader className="space-y-4">
         <div className="flex flex-col items-center gap-4 justify-center lg:hidden">
           <Logo variant="stacked" />
-          <h1 className="font-[family-name:var(--font-montserrat)] text-md font-semibold tracking-tight">
-            Departamento de Radiocomunicação
+          <Separator className="w-full" />
+          <h1 className="font-[family-name:var(--font-montserrat)] text- font-semibold tracking-tight">
+            RADCOM - Sistema de Gestão de Rádios
           </h1>
         </div>
         <div className="space-y-1">
-          <CardTitle className="text-2xl">Entrar no sistema</CardTitle>
+          <CardTitle className="text-2xl">Autenticação</CardTitle>
           <CardDescription>
             Use as credenciais cadastradas pela coordenação.
           </CardDescription>

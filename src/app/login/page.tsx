@@ -9,8 +9,8 @@ export default async function LoginPage({ searchParams }: Props) {
   const { callbackUrl } = await searchParams;
 
   return (
-    <main className="grid min-h-svh lg:grid-cols-2">
-      <aside className="relative hidden flex-col justify-between overflow-hidden bg-navy p-12 text-navy-foreground lg:flex">
+    <main className="grid min-h-svh bg-navy text-navy-foreground lg:grid-cols-2">
+      <aside className="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex">
         <div
           className="pointer-events-none absolute inset-0 opacity-10"
           aria-hidden="true"
@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: Props) {
           © Cruz Vermelha Brasileira
         </p>
       </aside>
-      <section className="flex items-center justify-center p-6">
+      <section className="flex items-center justify-center p-6 lg:bg-background lg:text-foreground">
         <LoginForm callbackUrl={callbackUrl} />
       </section>
     </main>

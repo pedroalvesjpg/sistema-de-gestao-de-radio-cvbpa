@@ -90,12 +90,7 @@ export default async function UsuariosPage() {
                       {fmtData(u.criadoEm)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <UsuarioActionsMenu
-                        userId={u.id}
-                        userName={u.nome}
-                        role={u.role}
-                        isSelf={isSelf}
-                      />
+                      <UsuarioActionsMenu user={u} isSelf={isSelf} />
                     </TableCell>
                   </TableRow>
                 );

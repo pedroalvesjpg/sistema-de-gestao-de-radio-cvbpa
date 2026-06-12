@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth-guards";
 import { Button } from "@/components/ui/button";
 import { AdminDashboard } from "./admin-dashboard";
 import { EventosList } from "./eventos-list";
+import { UserWelcome } from "./user-welcome";
 
 export default async function HomePage() {
   const session = await requireUser();
@@ -19,7 +20,11 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-8">
-      {isAdmin && <AdminDashboard userName={session.user.name ?? ""} />}
+      {isAdmin ? (
+        <AdminDashboard userName={session.user.name ?? ""} />
+      ) : (
+        <UserWelcome userName={session.user.name ?? ""} />
+      )}
 
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4">

@@ -10,7 +10,10 @@ export function MainNav({ isAdmin }: { isAdmin: boolean }) {
   const items = [
     { href: "/", label: "Eventos", match: (p: string) => p === "/" || p.startsWith("/eventos") },
     ...(isAdmin
-      ? [{ href: "/usuarios", label: "Usuários", match: (p: string) => p.startsWith("/usuarios") }]
+      ? [
+          { href: "/usuarios", label: "Usuários", match: (p: string) => p.startsWith("/usuarios") },
+          { href: "/auditoria", label: "Auditoria", match: (p: string) => p.startsWith("/auditoria") },
+        ]
       : []),
   ];
 

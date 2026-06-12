@@ -35,7 +35,7 @@ type Registro = {
   } | null;
 };
 
-type FilterTab = "todos" | "abertos" | "devolvidos";
+type FilterTab = "todos" | "abertos" | "devolvidos" | "avarias";
 
 export function RadiosList({
   registros,
@@ -51,7 +51,10 @@ export function RadiosList({
     const q = query.trim().toLowerCase();
     return registros.filter((r) => {
       if (tab === "abertos" && r.devolucao) return false;
-      if (tab === "devolvidos" && !r.devolucao) return false;
+      if (tab === "devolvidos" && (!r.devolucao || r.devolucao.possuiAvaria))
+        return false;
+      if (tab === "avarias" && (!r.devolucao || !r.devolucao.possuiAvaria))
+        return false;
       if (q) {
         const haystack =
           `${r.modeloRadio} ${r.codigoRadio} ${r.equipe} ${r.nomeResponsavel} ${r.rgResponsavel}`.toLowerCase();
@@ -63,7 +66,10 @@ export function RadiosList({
 
   const total = registros.length;
   const abertos = registros.filter((r) => !r.devolucao).length;
-  const devolvidos = total - abertos;
+  const avarias = registros.filter(
+    (r) => r.devolucao && r.devolucao.possuiAvaria,
+  ).length;
+  const devolvidosOk = total - abertos - avarias;
 
   if (total === 0) {
     return (
@@ -88,7 +94,10 @@ export function RadiosList({
                 Em aberto <CountBadge>{abertos}</CountBadge>
               </TabsTrigger>
               <TabsTrigger value="devolvidos">
-                Devolvidos <CountBadge>{devolvidos}</CountBadge>
+                Devolvidos OK <CountBadge>{devolvidosOk}</CountBadge>
+              </TabsTrigger>
+              <TabsTrigger value="avarias">
+                Com avaria <CountBadge>{avarias}</CountBadge>
               </TabsTrigger>
             </TabsList>
           </Tabs>
