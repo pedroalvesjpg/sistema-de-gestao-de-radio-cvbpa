@@ -1,0 +1,72 @@
+// Sistema de Controle de Rádios — Cruz Vermelha
+// Prisma 7: provider = "prisma-client" (sem -js); url mora em prisma.config.ts.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  COMUM
+  ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  nome      String              // "Celio Fulano" — exibição
+  cargo     String?             // "Diretor(a)" — só display, sem regra
+  email     String   @unique    // login
+  senhaHash String              // NUNCA senha em texto puro
+  role      Role     @default(COMUM)
+  criadoEm  DateTime @default(now())
+
+  eventosCriados    Evento[]
+  registrosCriados  Registro[]
+  devolucoesCriadas Devolucao[]
+}
+
+model Evento {
+  id          Int        @id @default(autoincrement())
+  nome        String
+  dataInicio  DateTime
+  dataFim     DateTime
+  criadoPor   User       @relation(fields: [criadoPorId], references: [id])
+  criadoPorId Int
+  criadoEm    DateTime   @default(now())
+  registros   Registro[]
+}
+
+model Registro {
+  id                Int        @id @default(autoincrement())
+  evento            Evento     @relation(fields: [eventoId], references: [id])
+  eventoId          Int
+  modeloRadio       String     // "Baofeng UV-82"
+  codigoRadio       String     // "25" — string de propósito
+  equipe            String     // texto livre — "Equipe do Vice Presidente Abel"
+  nomeResponsavel   String
+  rgResponsavel     String
+  urlFotoRg         String
+  urlFotoRadioSaida String
+  observacao        String?
+  criadoPor         User       @relation(fields: [criadoPorId], references: [id])
+  criadoPorId       Int
+  criadoEm          DateTime   @default(now())
+  devolucao         Devolucao? // relação 1:1
+}
+
+model Devolucao {
+  id                    Int      @id @default(autoincrement())
+  registro              Registro @relation(fields: [registroId], references: [id])
+  registroId            Int      @unique   // garante o 1:1
+  urlFotoRadioDevolucao String
+  possuiAvaria          Boolean  @default(false)
+  observacao            String?
+  devolvidoPor          String?  // null = mesmo responsável do registro
+  criadoPor             User     @relation(fields: [criadoPorId], references: [id])
+  criadoPorId           Int
+  criadoEm              DateTime @default(now())
+}
