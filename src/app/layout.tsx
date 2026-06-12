@@ -16,8 +16,9 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Controle de Rádios — Cruz Vermelha Brasileira",
-  description: "Sistema de empréstimo e devolução de rádios em eventos da CVB",
+  title: "RADCOM | Gestão de Rádios",
+  description:
+    "Sistema de empréstimo e devolução de rádios em eventos da Cruz Vermelha Brasileira",
 };
 
 export default function RootLayout({
