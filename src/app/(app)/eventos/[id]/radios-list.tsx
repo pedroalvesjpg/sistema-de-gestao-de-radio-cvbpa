@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Images, Search } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,8 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FotoViewer } from "@/components/foto-viewer";
 import { fmtDataHora } from "@/lib/format";
 import { DevolucaoForm } from "./devolucao-form";
 import { RegistroActionsMenu } from "./registro-actions-menu";
@@ -24,6 +26,8 @@ type Registro = {
   nomeResponsavel: string;
   rgResponsavel: string;
   observacao: string | null;
+  urlFotoRg: string;
+  urlFotoRadioSaida: string;
   criadoEm: Date;
   criadoPor: { nome: string };
   devolucao: {
@@ -31,6 +35,7 @@ type Registro = {
     possuiAvaria: boolean;
     observacao: string | null;
     devolvidoPor: string | null;
+    urlFotoRadioDevolucao: string;
     criadoEm: Date;
   } | null;
 };
@@ -144,6 +149,21 @@ function RegistroCard({
   registro: Registro;
   podeEscrever: boolean;
 }) {
+  const [fotosOpen, setFotosOpen] = useState(false);
+
+  const fotos = [
+    { label: "RG do responsável", path: registro.urlFotoRg },
+    { label: "Rádio na entrega", path: registro.urlFotoRadioSaida },
+    ...(registro.devolucao
+      ? [
+          {
+            label: "Rádio na devolução",
+            path: registro.devolucao.urlFotoRadioDevolucao,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -184,7 +204,7 @@ function RegistroCard({
           <Field label="Observação">{registro.observacao}</Field>
         )}
 
-        {registro.devolucao ? (
+        {registro.devolucao && (
           <div className="rounded-md border bg-secondary/40 p-3 text-sm">
             <div className="font-medium">
               Devolvido em {fmtDataHora(registro.devolucao.criadoEm)}
@@ -197,17 +217,33 @@ function RegistroCard({
               </p>
             )}
           </div>
-        ) : (
-          podeEscrever && (
-            <div className="flex justify-end pt-1">
-              <DevolucaoForm
-                registroId={registro.id}
-                registroLabel={`${registro.modeloRadio} #${registro.codigoRadio} · ${registro.equipe}`}
-                responsavelPadrao={registro.nomeResponsavel}
-              />
-            </div>
-          )
         )}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setFotosOpen(true)}
+          >
+            <Images />
+            Ver fotos ({fotos.length})
+          </Button>
+          {!registro.devolucao && podeEscrever && (
+            <DevolucaoForm
+              registroId={registro.id}
+              registroLabel={`${registro.modeloRadio} #${registro.codigoRadio} · ${registro.equipe}`}
+              responsavelPadrao={registro.nomeResponsavel}
+            />
+          )}
+        </div>
+
+        <FotoViewer
+          open={fotosOpen}
+          onOpenChange={setFotosOpen}
+          titulo={`${registro.modeloRadio} #${registro.codigoRadio} · ${registro.equipe}`}
+          fotos={fotos}
+        />
       </CardContent>
     </Card>
   );

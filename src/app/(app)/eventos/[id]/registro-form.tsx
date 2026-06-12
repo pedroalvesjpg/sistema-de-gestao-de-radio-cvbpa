@@ -18,6 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { FotoUploader } from "@/components/foto-uploader";
 import { criarRegistro } from "./actions";
 
 const schema = z.object({
@@ -27,6 +28,8 @@ const schema = z.object({
   nomeResponsavel: z.string().min(1, "Nome obrigatório"),
   rgResponsavel: z.string().min(1, "RG obrigatório"),
   observacao: z.string().optional(),
+  urlFotoRg: z.string().min(1, "Foto do RG obrigatória"),
+  urlFotoRadioSaida: z.string().min(1, "Foto do rádio obrigatória"),
 });
 
 type Values = z.infer<typeof schema>;
@@ -38,6 +41,8 @@ const defaults: Values = {
   nomeResponsavel: "",
   rgResponsavel: "",
   observacao: "",
+  urlFotoRg: "",
+  urlFotoRadioSaida: "",
 };
 
 export function RegistroForm({ eventoId }: { eventoId: number }) {
@@ -132,6 +137,44 @@ export function RegistroForm({ eventoId }: { eventoId: number }) {
             )}
           />
         </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            name="urlFotoRg"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FotoUploader
+                  tipo="rg"
+                  label="Foto do RG"
+                  value={field.value}
+                  onChange={(p) =>
+                    form.setValue("urlFotoRg", p, { shouldValidate: true })
+                  }
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="urlFotoRadioSaida"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FotoUploader
+                  tipo="saida"
+                  label="Foto do rádio na entrega"
+                  value={field.value}
+                  onChange={(p) =>
+                    form.setValue("urlFotoRadioSaida", p, {
+                      shouldValidate: true,
+                    })
+                  }
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <FormField
           name="observacao"
           control={form.control}
@@ -145,9 +188,6 @@ export function RegistroForm({ eventoId }: { eventoId: number }) {
             </FormItem>
           )}
         />
-        <p className="text-xs text-muted-foreground">
-          Fotos do RG e do rádio entrarão na próxima etapa, junto com o Supabase Storage.
-        </p>
         <Button type="submit" disabled={pending} className="w-full sm:w-auto">
           {pending ? "Registrando…" : "Registrar saída"}
         </Button>

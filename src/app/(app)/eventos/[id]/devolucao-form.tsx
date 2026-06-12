@@ -28,6 +28,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { FotoUploader } from "@/components/foto-uploader";
 import { cn } from "@/lib/utils";
 import { criarDevolucao } from "./actions";
 
@@ -37,6 +38,7 @@ const schema = z
     devolvidoOutraPessoa: z.boolean(),
     devolvidoPor: z.string().optional(),
     observacao: z.string().optional(),
+    urlFotoRadioDevolucao: z.string().min(1, "Foto da devolução obrigatória"),
   })
   .refine(
     (v) =>
@@ -55,6 +57,7 @@ const defaults: Values = {
   devolvidoOutraPessoa: false,
   devolvidoPor: "",
   observacao: "",
+  urlFotoRadioDevolucao: "",
 };
 
 type Props = {
@@ -84,6 +87,7 @@ export function DevolucaoForm({
         devolvidoPor: values.devolvidoOutraPessoa
           ? values.devolvidoPor
           : undefined,
+        urlFotoRadioDevolucao: values.urlFotoRadioDevolucao,
       });
       if ("error" in result) {
         toast.error(result.error);
@@ -173,6 +177,26 @@ export function DevolucaoForm({
                 )}
               />
             )}
+
+            <FormField
+              name="urlFotoRadioDevolucao"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FotoUploader
+                    tipo="devolucao"
+                    label="Foto do rádio na devolução"
+                    value={field.value}
+                    onChange={(p) =>
+                      form.setValue("urlFotoRadioDevolucao", p, {
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               name="observacao"

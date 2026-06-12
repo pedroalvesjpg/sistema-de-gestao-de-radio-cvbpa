@@ -5,6 +5,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guards";
 import { registrarAcao } from "@/lib/audit";
+import { deleteFoto } from "@/lib/storage";
 
 type CriarRegistroInput = {
   modeloRadio: string;
@@ -13,6 +14,8 @@ type CriarRegistroInput = {
   nomeResponsavel: string;
   rgResponsavel: string;
   observacao?: string;
+  urlFotoRg: string;
+  urlFotoRadioSaida: string;
 };
 
 type ParsedRegistro =
@@ -23,6 +26,8 @@ type ParsedRegistro =
       nomeResponsavel: string;
       rgResponsavel: string;
       observacao: string | null;
+      urlFotoRg: string;
+      urlFotoRadioSaida: string;
     } }
   | { ok: false; error: string };
 
@@ -33,13 +38,27 @@ function validarRegistro(input: CriarRegistroInput): ParsedRegistro {
   const nomeResponsavel = input.nomeResponsavel.trim();
   const rgResponsavel = input.rgResponsavel.trim();
   const observacao = input.observacao?.trim() || null;
+  const urlFotoRg = input.urlFotoRg.trim();
+  const urlFotoRadioSaida = input.urlFotoRadioSaida.trim();
 
   if (!modeloRadio || !codigoRadio || !equipe || !nomeResponsavel || !rgResponsavel) {
     return { ok: false, error: "Preencha modelo, código, equipe, nome e RG." };
   }
+  if (!urlFotoRg || !urlFotoRadioSaida) {
+    return { ok: false, error: "Faça upload da foto do RG e do rádio." };
+  }
   return {
     ok: true,
-    data: { modeloRadio, codigoRadio, equipe, nomeResponsavel, rgResponsavel, observacao },
+    data: {
+      modeloRadio,
+      codigoRadio,
+      equipe,
+      nomeResponsavel,
+      rgResponsavel,
+      observacao,
+      urlFotoRg,
+      urlFotoRadioSaida,
+    },
   };
 }
 
@@ -59,9 +78,6 @@ export async function criarRegistro(eventoId: number, input: CriarRegistroInput)
     data: {
       eventoId,
       ...parsed.data,
-      // TODO: upload real pro Supabase Storage; por enquanto placeholder.
-      urlFotoRg: "placeholder://rg",
-      urlFotoRadioSaida: "placeholder://radio-saida",
       criadoPorId: Number(session.user.id),
     },
     select: { id: true },
@@ -101,6 +117,14 @@ export async function editarRegistro(registroId: number, input: CriarRegistroInp
     data: parsed.data,
   });
 
+  // Limpa fotos antigas do storage se foram trocadas (não awaitar — fire & forget).
+  if (registro.urlFotoRg !== parsed.data.urlFotoRg) {
+    deleteFoto(registro.urlFotoRg).catch(() => {});
+  }
+  if (registro.urlFotoRadioSaida !== parsed.data.urlFotoRadioSaida) {
+    deleteFoto(registro.urlFotoRadioSaida).catch(() => {});
+  }
+
   await registrarAcao({
     acao: "REGISTRO_EDITADO",
     entidade: "Registro",
@@ -114,6 +138,8 @@ export async function editarRegistro(registroId: number, input: CriarRegistroInp
         nomeResponsavel: registro.nomeResponsavel,
         rgResponsavel: registro.rgResponsavel,
         observacao: registro.observacao,
+        urlFotoRg: registro.urlFotoRg,
+        urlFotoRadioSaida: registro.urlFotoRadioSaida,
       },
       depois: parsed.data,
     },
@@ -152,6 +178,13 @@ export async function desvincularRegistro(registroId: number) {
     throw e;
   }
 
+  // Limpa fotos do storage após o delete do DB.
+  deleteFoto(registro.urlFotoRg).catch(() => {});
+  deleteFoto(registro.urlFotoRadioSaida).catch(() => {});
+  if (registro.devolucao) {
+    deleteFoto(registro.devolucao.urlFotoRadioDevolucao).catch(() => {});
+  }
+
   await registrarAcao({
     acao: "REGISTRO_DESVINCULADO",
     entidade: "Registro",
@@ -186,6 +219,7 @@ type CriarDevolucaoInput = {
   possuiAvaria: boolean;
   observacao?: string;
   devolvidoPor?: string;
+  urlFotoRadioDevolucao: string;
 };
 
 export async function criarDevolucao(registroId: number, input: CriarDevolucaoInput) {
@@ -203,12 +237,16 @@ export async function criarDevolucao(registroId: number, input: CriarDevolucaoIn
 
   const observacao = input.observacao?.trim() || null;
   const devolvidoPor = input.devolvidoPor?.trim() || null;
+  const urlFotoRadioDevolucao = input.urlFotoRadioDevolucao.trim();
+
+  if (!urlFotoRadioDevolucao) {
+    return { error: "Faça upload da foto do rádio na devolução." } as const;
+  }
 
   const devolucao = await prisma.devolucao.create({
     data: {
       registroId,
-      // TODO: upload real pro Supabase Storage; por enquanto placeholder.
-      urlFotoRadioDevolucao: "placeholder://radio-devolucao",
+      urlFotoRadioDevolucao,
       possuiAvaria: input.possuiAvaria,
       observacao,
       devolvidoPor,
@@ -228,6 +266,7 @@ export async function criarDevolucao(registroId: number, input: CriarDevolucaoIn
       possuiAvaria: input.possuiAvaria,
       devolvidoPor,
       observacao,
+      urlFotoRadioDevolucao,
     },
   });
 
@@ -260,10 +299,13 @@ export async function cancelarDevolucao(registroId: number) {
     possuiAvaria: registro.devolucao.possuiAvaria,
     devolvidoPor: registro.devolucao.devolvidoPor,
     observacao: registro.devolucao.observacao,
+    urlFotoRadioDevolucao: registro.devolucao.urlFotoRadioDevolucao,
     criadoEmDevolucao: registro.devolucao.criadoEm,
   };
 
+  const fotoPath = registro.devolucao.urlFotoRadioDevolucao;
   await prisma.devolucao.delete({ where: { registroId } });
+  deleteFoto(fotoPath).catch(() => {});
 
   await registrarAcao({
     acao: "DEVOLUCAO_CANCELADA",

@@ -33,6 +33,8 @@ type Registro = {
   nomeResponsavel: string;
   rgResponsavel: string;
   observacao: string | null;
+  urlFotoRg: string;
+  urlFotoRadioSaida: string;
   devolucao: { id: number } | null;
 };
 
