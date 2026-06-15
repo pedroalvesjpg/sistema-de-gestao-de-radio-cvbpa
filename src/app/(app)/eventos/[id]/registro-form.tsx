@@ -122,7 +122,7 @@ export function RegistroForm({
               <FormItem>
                 <FormLabel>Nome do responsável</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Nome completo" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -135,7 +135,7 @@ export function RegistroForm({
               <FormItem>
                 <FormLabel>RG</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="00.000.000-0" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -187,13 +187,22 @@ export function RegistroForm({
             <FormItem>
               <FormLabel>Observação (opcional)</FormLabel>
               <FormControl>
-                <Textarea rows={2} {...field} />
+                <Textarea
+                  rows={2}
+                  placeholder="Algo importante a registrar sobre a saída"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+        <Button
+          type="submit"
+          size="lg"
+          disabled={pending}
+          className="w-full sm:w-auto"
+        >
           {pending ? "Registrando…" : "Registrar saída"}
         </Button>
       </form>
