@@ -31,3 +31,8 @@ export function statusEvento(evento: { dataInicio: Date; dataFim: Date }, now = 
   if (now > evento.dataFim) return "passado" as const;
   return "atual" as const;
 }
+
+/** Identificador institucional do registro: RAD-00123. */
+export function codigoRegistro(registro: { id: number }) {
+  return `RAD-${registro.id.toString().padStart(5, "0")}`;
+}

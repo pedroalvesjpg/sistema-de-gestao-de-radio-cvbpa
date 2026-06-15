@@ -1,15 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guards";
 import { fmtData } from "@/lib/format";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { TrocarSenhaForm } from "./trocar-senha-form";
 
 export default async function PerfilPage() {
@@ -32,57 +24,58 @@ export default async function PerfilPage() {
     );
   }
 
+  const isAdmin = user.role === "ADMIN";
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="font-[family-name:var(--font-montserrat)] text-3xl font-bold tracking-tight">
+    <div className="mx-auto max-w-2xl space-y-10">
+      <div className="border-b border-border pb-6">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">
           Meu perfil
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Seus dados e configurações de conta.
-        </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Dados da conta</CardTitle>
-          <CardDescription>
-            Para alterar nome, email ou cargo, peça à coordenação.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
+      <section className="space-y-4">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="font-display text-lg font-extrabold tracking-tight">
+            Dados da conta
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Pra alterar, peça à coordenação.
+          </p>
+        </div>
+        <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-background">
           <Field label="Nome" value={user.nome} />
-          <Separator />
           <Field label="Email" value={user.email} />
-          <Separator />
           <Field label="Cargo" value={user.cargo || "—"} />
-          <Separator />
           <Field
             label="Papel"
             value={
-              <Badge
-                variant={user.role === "ADMIN" ? "default" : "secondary"}
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide",
+                  isAdmin ? "text-primary" : "text-muted-foreground",
+                )}
               >
-                {user.role === "ADMIN" ? "Administrador" : "Operador"}
-              </Badge>
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    isAdmin ? "bg-primary" : "bg-muted-foreground/50",
+                  )}
+                />
+                {isAdmin ? "Administrador" : "Operador"}
+              </span>
             }
           />
-          <Separator />
           <Field label="Membro desde" value={fmtData(user.criadoEm)} />
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Alterar senha</CardTitle>
-          <CardDescription>
-            Você precisa informar sua senha atual para confirmar a mudança.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <TrocarSenhaForm />
-        </CardContent>
-      </Card>
+      <section className="space-y-4">
+        <h2 className="font-display text-lg font-extrabold tracking-tight">
+          Alterar senha
+        </h2>
+        <TrocarSenhaForm />
+      </section>
     </div>
   );
 }
@@ -95,9 +88,11 @@ function Field({
   value: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">{value}</span>
+    <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-5 sm:py-4">
+      <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <span className="text-sm font-semibold tabular-nums">{value}</span>
     </div>
   );
 }

@@ -28,21 +28,13 @@ export default async function HomePage() {
 
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="font-[family-name:var(--font-montserrat)] text-2xl font-bold tracking-tight">
-              Eventos
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {isAdmin
-                ? "Todos os eventos cadastrados."
-                : "Aqui você pode visualizar todos os eventos."}
-            </p>
-          </div>
+          <h2 className="font-display text-2xl font-extrabold tracking-tight">
+            Eventos
+          </h2>
           {isAdmin && (
             <Button
               render={<Link href="/eventos/novo" />}
               nativeButton={false}
-              size="lg"
             >
               Novo evento
             </Button>

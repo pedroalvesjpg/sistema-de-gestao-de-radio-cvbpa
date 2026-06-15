@@ -51,7 +51,7 @@ export function Logo({ variant = "horizontal", className, hideLabel }: LogoProps
       >
         <span className="h-12 w-12">{cross}</span>
         {!hideLabel && (
-          <span className="text-center text-[10px] font-extrabold uppercase tracking-tight leading-tight font-[family-name:var(--font-montserrat)]">
+          <span className="text-center text-[10px] font-extrabold uppercase tracking-tight leading-tight font-display">
             Cruz Vermelha<br />Brasileira
           </span>
         )}
@@ -67,7 +67,7 @@ export function Logo({ variant = "horizontal", className, hideLabel }: LogoProps
       <span className="h-9 w-9 shrink-0">{cross}</span>
       <span
         className={cn(
-          "text-[11px] font-extrabold uppercase leading-tight tracking-tight font-[family-name:var(--font-montserrat)]",
+          "text-[11px] font-extrabold uppercase leading-tight tracking-tight font-display",
           hideLabel && "sr-only",
         )}
       >

@@ -3,9 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guards";
 import { fmtDataHora } from "@/lib/format";
 import { RotuloAcao, type AcaoAudit } from "@/lib/audit";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -63,129 +61,129 @@ export default async function AuditoriaPage({ searchParams }: Props) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-[family-name:var(--font-montserrat)] text-3xl font-bold tracking-tight">
+      <div className="flex items-baseline gap-4 border-b border-border pb-6">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">
           Auditoria
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Aqui você pode visualizar todas as ações realizadas no sistema, serve
-          como forma de previnir possíveis alterações mal intencionadas e
-          investigar o que aconteceu caso algo dê errado.
-        </p>
+        <span className="font-mono text-sm font-medium tabular-nums text-muted-foreground">
+          {total}
+        </span>
       </div>
 
-      <Card>
-        <CardContent className="p-4">
-          <form className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
-            <Input
-              name="ator"
-              defaultValue={ator}
-              placeholder="Buscar por nome do ator…"
-            />
-            <select
-              name="acao"
-              defaultValue={acao}
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+      <form className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+        <Input
+          name="ator"
+          defaultValue={ator}
+          placeholder="Buscar por nome do ator…"
+        />
+        <select
+          name="acao"
+          defaultValue={acao}
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="">Toda ação</option>
+          {ACOES.map((a) => (
+            <option key={a} value={a}>
+              {RotuloAcao[a]}
+            </option>
+          ))}
+        </select>
+        <select
+          name="entidade"
+          defaultValue={entidade}
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+        >
+          {ENTIDADES.map((e) => (
+            <option key={e} value={e}>
+              {e || "Toda entidade"}
+            </option>
+          ))}
+        </select>
+        <div className="flex gap-2">
+          <Button type="submit">Filtrar</Button>
+          {hasFilters && (
+            <Button
+              type="button"
+              variant="outline"
+              render={<Link href="/auditoria" />}
+              nativeButton={false}
             >
-              <option value="">Toda ação</option>
-              {ACOES.map((a) => (
-                <option key={a} value={a}>
-                  {RotuloAcao[a]}
-                </option>
-              ))}
-            </select>
-            <select
-              name="entidade"
-              defaultValue={entidade}
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              {ENTIDADES.map((e) => (
-                <option key={e} value={e}>
-                  {e || "Toda entidade"}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2">
-              <Button type="submit">Filtrar</Button>
-              {hasFilters && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  render={<Link href="/auditoria" />}
-                  nativeButton={false}
-                >
-                  Limpar
-                </Button>
-              )}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              Limpar
+            </Button>
+          )}
+        </div>
+      </form>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <div className="overflow-hidden rounded-md border border-border bg-background">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-44 text-xs font-bold uppercase tracking-wide">
+                Data / hora
+              </TableHead>
+              <TableHead className="w-40 text-xs font-bold uppercase tracking-wide">
+                Ator
+              </TableHead>
+              <TableHead className="w-52 text-xs font-bold uppercase tracking-wide">
+                Ação
+              </TableHead>
+              <TableHead className="text-xs font-bold uppercase tracking-wide">
+                Resumo
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {logs.length === 0 ? (
               <TableRow>
-                <TableHead className="w-44">Data / hora</TableHead>
-                <TableHead className="w-40">Ator</TableHead>
-                <TableHead className="w-52">Ação</TableHead>
-                <TableHead>Resumo</TableHead>
+                <TableCell
+                  colSpan={4}
+                  className="py-10 text-center text-sm text-muted-foreground"
+                >
+                  Nenhum log encontrado com esses filtros.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logs.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="py-10 text-center text-sm text-muted-foreground"
-                  >
-                    Nenhum log encontrado com esses filtros.
+            ) : (
+              logs.map((log) => (
+                <TableRow key={log.id} className="align-top">
+                  <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
+                    {fmtDataHora(log.criadoEm)}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    <div className="font-semibold">{log.actorNome}</div>
+                    {!log.actorId && (
+                      <div className="text-xs text-muted-foreground">
+                        (conta excluída)
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      {RotuloAcao[log.acao as AcaoAudit] ?? log.acao}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    <div>{log.resumo}</div>
+                    {log.detalhes && (
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-xs font-bold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground">
+                          Detalhes
+                        </summary>
+                        <pre className="mt-2 overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs">
+                          {JSON.stringify(log.detalhes, null, 2)}
+                        </pre>
+                      </details>
+                    )}
                   </TableCell>
                 </TableRow>
-              ) : (
-                logs.map((log) => (
-                  <TableRow key={log.id} className="align-top">
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {fmtDataHora(log.criadoEm)}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <div className="font-medium">{log.actorNome}</div>
-                      {!log.actorId && (
-                        <div className="text-xs text-muted-foreground">
-                          (conta excluída)
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="font-normal">
-                        {RotuloAcao[log.acao as AcaoAudit] ?? log.acao}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <div>{log.resumo}</div>
-                      {log.detalhes && (
-                        <details className="mt-2">
-                          <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
-                            Ver detalhes
-                          </summary>
-                          <pre className="mt-2 overflow-x-auto rounded-md bg-muted p-3 text-xs">
-                            {JSON.stringify(log.detalhes, null, 2)}
-                          </pre>
-                        </details>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
             Página {page} de {totalPages} · {total}{" "}
             {total === 1 ? "registro" : "registros"}
           </span>

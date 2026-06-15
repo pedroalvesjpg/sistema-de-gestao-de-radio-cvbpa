@@ -1,36 +1,24 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth-guards";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { NovoEventoForm } from "./novo-evento-form";
 
 export default async function NovoEventoPage() {
   await requireAdmin();
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto max-w-2xl space-y-8">
       <Link
         href="/"
-        className="inline-flex text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center text-xs font-bold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
       >
-        ← Voltar aos eventos
+        ← Eventos
       </Link>
-      <Card>
-        <CardHeader>
-          <CardTitle>Novo evento</CardTitle>
-          <CardDescription>
-            Defina o nome e o período em que rádios serão emprestados.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <NovoEventoForm />
-        </CardContent>
-      </Card>
+      <div className="border-b border-border pb-6">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">
+          Novo evento
+        </h1>
+      </div>
+      <NovoEventoForm />
     </div>
   );
 }

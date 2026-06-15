@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -45,7 +44,13 @@ const defaults: Values = {
   urlFotoRadioSaida: "",
 };
 
-export function RegistroForm({ eventoId }: { eventoId: number }) {
+export function RegistroForm({
+  eventoId,
+  onSuccess,
+}: {
+  eventoId: number;
+  onSuccess?: () => void;
+}) {
   const [pending, startTransition] = useTransition();
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -61,6 +66,7 @@ export function RegistroForm({ eventoId }: { eventoId: number }) {
       }
       toast.success("Saída registrada");
       form.reset(defaults);
+      onSuccess?.();
     });
   }
 
@@ -104,7 +110,6 @@ export function RegistroForm({ eventoId }: { eventoId: number }) {
               <FormControl>
                 <Input placeholder="Equipe do Vice Presidente Abel" {...field} />
               </FormControl>
-              <FormDescription>Texto livre — escreva como o responsável informar.</FormDescription>
               <FormMessage />
             </FormItem>
           )}

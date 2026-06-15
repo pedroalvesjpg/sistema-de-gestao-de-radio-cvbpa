@@ -89,9 +89,7 @@ export function TrocarSenhaForm() {
               <FormControl>
                 <PasswordInput autoComplete="new-password" {...field} />
               </FormControl>
-              <FormDescription>
-                Pelo menos 6 caracteres. Escolha algo diferente da senha atual.
-              </FormDescription>
+              <FormDescription>Pelo menos 6 caracteres.</FormDescription>
               <FormMessage />
             </FormItem>
           )}

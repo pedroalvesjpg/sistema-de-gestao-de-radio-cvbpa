@@ -132,9 +132,6 @@ export function DevolucaoForm({
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Rádio voltou com avaria</FormLabel>
-                    <FormDescription>
-                      Marque se houver dano físico ou de funcionamento.
-                    </FormDescription>
                   </div>
                 </FormItem>
               )}

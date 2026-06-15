@@ -1,18 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { CalendarDays } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guards";
 import { fmtData, statusEvento } from "@/lib/format";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { EventoStatusBadge } from "@/components/eventos/status-badge";
-import { RegistroForm } from "./registro-form";
+import { RegistroDialog } from "./registro-dialog";
 import { RadiosList } from "./radios-list";
 import { EventoActionsMenu } from "./evento-actions-menu";
 
@@ -47,91 +41,84 @@ export default async function EventoPage({ params }: Props) {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-3">
-        <Link
-          href="/"
-          className="inline-flex text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Eventos
-        </Link>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <h1 className="font-[family-name:var(--font-montserrat)] text-3xl font-bold tracking-tight">
+      <Link
+        href="/"
+        className="inline-flex items-center text-xs font-bold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+      >
+        ← Eventos
+      </Link>
+
+      <div className="border-b border-border pb-6">
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-display text-3xl font-extrabold tracking-tight">
                 {evento.nome}
               </h1>
               <EventoStatusBadge evento={evento} />
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="mt-2 flex items-center gap-1.5 text-sm tabular-nums text-muted-foreground">
+              <CalendarDays className="size-4 shrink-0" aria-hidden />
               {fmtData(evento.dataInicio)} → {fmtData(evento.dataFim)}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex gap-6 rounded-lg border bg-card px-5 py-3 text-sm">
-              <Stat label="Total" value={total} />
-              <Separator orientation="vertical" className="h-auto" />
-              <Stat label="Em aberto" value={emAberto} highlight />
-              <Separator orientation="vertical" className="h-auto" />
-              <Stat label="Devolvidos" value={devolvidos} />
-            </div>
-            {isAdmin && (
-              <EventoActionsMenu
-                evento={{
-                  id: evento.id,
-                  nome: evento.nome,
-                  dataInicio: evento.dataInicio,
-                  dataFim: evento.dataFim,
-                }}
-              />
-            )}
-          </div>
+          {isAdmin && (
+            <EventoActionsMenu
+              evento={{
+                id: evento.id,
+                nome: evento.nome,
+                dataInicio: evento.dataInicio,
+                dataFim: evento.dataFim,
+              }}
+            />
+          )}
+        </div>
+
+        <div className="mt-6 grid grid-cols-3 divide-x divide-border overflow-hidden rounded-md border border-border bg-background">
+          <StatCell label="Total" value={total} />
+          <StatCell label="Em aberto" value={emAberto} tone="primary" />
+          <StatCell label="Devolvidos" value={devolvidos} muted />
         </div>
       </div>
 
-      {podeEscrever && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Registrar saída de rádio</CardTitle>
-            <CardDescription>
-              Vincula um rádio a uma equipe e ao responsável que o retirou.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RegistroForm eventoId={evento.id} />
-          </CardContent>
-        </Card>
-      )}
-
-      <section className="space-y-3">
-        <h2 className="font-[family-name:var(--font-montserrat)] text-lg font-bold">
-          Rádios entregues
-        </h2>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="font-display text-xl font-extrabold tracking-tight">
+            Rádios
+          </h2>
+          {podeEscrever && <RegistroDialog eventoId={evento.id} />}
+        </div>
         <RadiosList registros={evento.registros} podeEscrever={podeEscrever} />
       </section>
     </div>
   );
 }
 
-function Stat({
+function StatCell({
   label,
   value,
-  highlight,
+  tone,
+  muted,
 }: {
   label: string;
   value: number;
-  highlight?: boolean;
+  tone?: "primary";
+  muted?: boolean;
 }) {
   return (
-    <div>
+    <div className="px-4 py-3 sm:px-6 sm:py-4">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
       <div
-        className={
-          "text-xl font-bold leading-none " +
-          (highlight ? "text-primary" : "text-foreground")
-        }
+        className={cn(
+          "mt-1 font-display text-2xl font-black leading-none tabular-nums",
+          tone === "primary" && "text-primary",
+          muted && "text-foreground/60",
+        )}
       >
         {value}
       </div>
-      <div className="mt-0.5 text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }

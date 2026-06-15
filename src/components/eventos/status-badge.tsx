@@ -1,19 +1,16 @@
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { statusEvento } from "@/lib/format";
 
 type Status = ReturnType<typeof statusEvento>;
 
-const styles: Record<Status, string> = {
-  atual: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
-  futuro: "bg-navy/10 text-navy hover:bg-navy/10",
-  passado: "bg-muted text-muted-foreground hover:bg-muted",
-};
-
-const labels: Record<Status, string> = {
-  atual: "Em andamento",
-  futuro: "Próximo",
-  passado: "Encerrado",
+const config: Record<Status, { label: string; dot: string; text: string }> = {
+  atual: { label: "Ao vivo", dot: "bg-primary", text: "text-primary" },
+  futuro: { label: "Próximo", dot: "bg-navy", text: "text-navy" },
+  passado: {
+    label: "Encerrado",
+    dot: "bg-muted-foreground/40",
+    text: "text-muted-foreground",
+  },
 };
 
 export function EventoStatusBadge({
@@ -24,12 +21,17 @@ export function EventoStatusBadge({
   className?: string;
 }) {
   const status = statusEvento(evento);
+  const c = config[status];
   return (
-    <Badge
-      variant="secondary"
-      className={cn("border-transparent font-medium", styles[status], className)}
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide",
+        c.text,
+        className,
+      )}
     >
-      {labels[status]}
-    </Badge>
+      <span className={cn("h-1.5 w-1.5 rounded-full", c.dot)} />
+      {c.label}
+    </span>
   );
 }

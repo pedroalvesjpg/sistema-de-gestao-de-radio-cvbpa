@@ -43,12 +43,20 @@ export function MobileBottomNav({ isAdmin }: { isAdmin: boolean }) {
           const active = item.match(pathname);
           const Icon = item.icon;
           return (
-            <li key={item.href} className="flex-1">
+            <li key={item.href} className="relative flex-1">
+              {active && (
+                <span
+                  className="absolute inset-x-0 top-0 h-[2px] bg-primary"
+                  aria-hidden
+                />
+              )}
               <Link
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors",
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                  "flex flex-col items-center gap-1 py-3 text-[10px] font-bold uppercase tracking-wider transition-colors",
+                  active
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
                 aria-current={active ? "page" : undefined}
               >

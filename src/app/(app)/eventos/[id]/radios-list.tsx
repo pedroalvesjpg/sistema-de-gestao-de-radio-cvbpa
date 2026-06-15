@@ -2,19 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { Images, Search } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FotoViewer } from "@/components/foto-viewer";
-import { fmtDataHora } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { codigoRegistro, fmtDataHora } from "@/lib/format";
 import { DevolucaoForm } from "./devolucao-form";
 import { RegistroActionsMenu } from "./registro-actions-menu";
 
@@ -41,6 +33,13 @@ type Registro = {
 };
 
 type FilterTab = "todos" | "abertos" | "devolvidos" | "avarias";
+
+const filterLabels: Record<FilterTab, string> = {
+  todos: "Todos",
+  abertos: "Em aberto",
+  devolvidos: "Devolvidos",
+  avarias: "Com avaria",
+};
 
 export function RadiosList({
   registros,
@@ -78,71 +77,80 @@ export function RadiosList({
 
   if (total === 0) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          Nenhum rádio registrado ainda neste evento.
-        </CardContent>
-      </Card>
+      <EmptyState title="Nenhum rádio registrado" desc="A primeira saída aparece aqui." />
     );
   }
 
+  const totalByTab: Record<FilterTab, number> = {
+    todos: total,
+    abertos,
+    devolvidos: devolvidosOk,
+    avarias,
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="-mx-1 overflow-x-auto overflow-y-hidden px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-          <Tabs value={tab} onValueChange={(v) => setTab(v as FilterTab)}>
-            <TabsList>
-              <TabsTrigger value="todos">
-                Todos <CountBadge>{total}</CountBadge>
-              </TabsTrigger>
-              <TabsTrigger value="abertos">
-                Em aberto <CountBadge>{abertos}</CountBadge>
-              </TabsTrigger>
-              <TabsTrigger value="devolvidos">
-                Devolvidos OK <CountBadge>{devolvidosOk}</CountBadge>
-              </TabsTrigger>
-              <TabsTrigger value="avarias">
-                Com avaria <CountBadge>{avarias}</CountBadge>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+      <div className="flex flex-col gap-4 border-b border-border pb-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="-mx-1 flex overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+          <div className="flex gap-6">
+            {(Object.keys(filterLabels) as FilterTab[]).map((f) => {
+              const active = tab === f;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setTab(f)}
+                  className={cn(
+                    "relative whitespace-nowrap pb-2 text-sm font-bold uppercase tracking-wide transition-colors",
+                    active
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {filterLabels[f]}
+                  <span className="ml-1.5 font-semibold tabular-nums text-muted-foreground/70">
+                    {totalByTab[f]}
+                  </span>
+                  {active && (
+                    <span className="absolute inset-x-0 -bottom-px h-[2px] bg-primary" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <div className="relative w-full sm:max-w-xs">
+        <div className="relative w-full sm:max-w-sm">
           <Search
-            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden
           />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por modelo, código, equipe, responsável…"
-            className="pl-8"
+            placeholder="Modelo, código, equipe, responsável…"
+            className="pl-9"
           />
         </div>
       </div>
 
       {filtrados.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Nenhum rádio encontrado com esses critérios.
-          </CardContent>
-        </Card>
+        <EmptyState title="Nenhum rádio encontrado" desc="Nada bate com esses filtros." />
       ) : (
-        <div className="grid gap-3">
+        <ul className="divide-y divide-border overflow-hidden rounded-md border border-border bg-background">
           {filtrados.map((registro) => (
-            <RegistroCard
+            <RegistroRow
               key={registro.id}
               registro={registro}
               podeEscrever={podeEscrever}
             />
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );
 }
 
-function RegistroCard({
+function RegistroRow({
   registro,
   podeEscrever,
 }: {
@@ -164,138 +172,183 @@ function RegistroCard({
       : []),
   ];
 
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <CardTitle className="text-base">
-              {registro.modeloRadio}{" "}
-              <span className="text-muted-foreground">·</span>{" "}
-              <span className="font-mono">#{registro.codigoRadio}</span>
-            </CardTitle>
-            <CardDescription className="mt-1">{registro.equipe}</CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <DevolucaoStatusBadge devolucao={registro.devolucao} />
-            {podeEscrever && <RegistroActionsMenu registro={registro} />}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3 pt-0 text-sm">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Responsável">
-            <span className="font-medium text-foreground">
-              {registro.nomeResponsavel}
-            </span>{" "}
-            <span className="text-muted-foreground">
-              ({registro.rgResponsavel})
-            </span>
-          </Field>
-          <Field label="Registrado por">
-            {registro.criadoPor.nome}
-            <span className="text-muted-foreground">
-              {" "}
-              em {fmtDataHora(registro.criadoEm)}
-            </span>
-          </Field>
-        </div>
-        {registro.observacao && (
-          <Field label="Observação">{registro.observacao}</Field>
-        )}
+  const isAberto = !registro.devolucao;
 
-        {registro.devolucao && (
-          <div className="rounded-md border bg-secondary/40 p-3 text-sm">
-            <div className="font-medium">
-              Devolvido em {fmtDataHora(registro.devolucao.criadoEm)}
-              {registro.devolucao.devolvidoPor &&
-                ` por ${registro.devolucao.devolvidoPor}`}
-            </div>
-            {registro.devolucao.observacao && (
-              <p className="mt-1 text-muted-foreground">
-                {registro.devolucao.observacao}
-              </p>
+  return (
+    <li className="relative p-4 sm:p-6">
+      {isAberto && (
+        <span
+          className="pointer-events-none absolute inset-y-0 left-0 w-[3px] bg-primary"
+          aria-hidden
+        />
+      )}
+
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              {codigoRegistro(registro)}
+            </span>
+            <DevolucaoStatus devolucao={registro.devolucao} />
+          </div>
+          <div className="mt-2 font-display text-lg font-bold leading-tight">
+            {registro.modeloRadio}{" "}
+            <span className="text-muted-foreground">·</span>{" "}
+            <span className="font-mono">#{registro.codigoRadio}</span>
+          </div>
+          <div className="text-sm text-muted-foreground">{registro.equipe}</div>
+        </div>
+        {podeEscrever && <RegistroActionsMenu registro={registro} />}
+      </div>
+
+      <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+        <Field label="Responsável">
+          <span className="font-semibold text-foreground">
+            {registro.nomeResponsavel}
+          </span>{" "}
+          <span className="text-muted-foreground">
+            (RG {registro.rgResponsavel})
+          </span>
+        </Field>
+        <Field label="Saída registrada">
+          <span className="text-foreground">{registro.criadoPor.nome}</span>
+          <span className="text-muted-foreground">
+            {" "}
+            · {fmtDataHora(registro.criadoEm)}
+          </span>
+        </Field>
+        {registro.observacao && (
+          <Field label="Observação" className="sm:col-span-2">
+            {registro.observacao}
+          </Field>
+        )}
+      </div>
+
+      {registro.devolucao && (
+        <div className="mt-4 rounded-md border border-border bg-secondary/40 p-3 text-sm">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            Devolução
+          </div>
+          <div className="mt-1">
+            <span className="font-semibold">
+              {fmtDataHora(registro.devolucao.criadoEm)}
+            </span>
+            {registro.devolucao.devolvidoPor && (
+              <span className="text-muted-foreground">
+                {" "}
+                · por {registro.devolucao.devolvidoPor}
+              </span>
             )}
           </div>
-        )}
-
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setFotosOpen(true)}
-          >
-            <Images />
-            Ver fotos ({fotos.length})
-          </Button>
-          {!registro.devolucao && podeEscrever && (
-            <DevolucaoForm
-              registroId={registro.id}
-              registroLabel={`${registro.modeloRadio} #${registro.codigoRadio} · ${registro.equipe}`}
-              responsavelPadrao={registro.nomeResponsavel}
-            />
+          {registro.devolucao.observacao && (
+            <p className="mt-1 text-muted-foreground">
+              {registro.devolucao.observacao}
+            </p>
           )}
         </div>
+      )}
 
-        <FotoViewer
-          open={fotosOpen}
-          onOpenChange={setFotosOpen}
-          titulo={`${registro.modeloRadio} #${registro.codigoRadio} · ${registro.equipe}`}
-          fotos={fotos}
-        />
-      </CardContent>
-    </Card>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setFotosOpen(true)}
+        >
+          <Images />
+          Ver fotos ({fotos.length})
+        </Button>
+        {isAberto && podeEscrever && (
+          <DevolucaoForm
+            registroId={registro.id}
+            registroLabel={`${registro.modeloRadio} #${registro.codigoRadio} · ${registro.equipe}`}
+            responsavelPadrao={registro.nomeResponsavel}
+          />
+        )}
+      </div>
+
+      <FotoViewer
+        open={fotosOpen}
+        onOpenChange={setFotosOpen}
+        titulo={`${registro.modeloRadio} #${registro.codigoRadio} · ${registro.equipe}`}
+        fotos={fotos}
+      />
+    </li>
   );
 }
 
 function Field({
   label,
   children,
+  className,
 }: {
   label: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div>
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+    <div className={className}>
+      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
-      <div className="mt-0.5">{children}</div>
+      <div className="mt-1">{children}</div>
     </div>
   );
 }
 
-function DevolucaoStatusBadge({
+function DevolucaoStatus({
   devolucao,
 }: {
   devolucao: { possuiAvaria: boolean } | null;
 }) {
   if (!devolucao) {
     return (
-      <Badge className="border-transparent bg-primary/10 text-primary hover:bg-primary/10">
+      <Pill dot="bg-primary" text="text-primary">
         Em aberto
-      </Badge>
+      </Pill>
     );
   }
   if (devolucao.possuiAvaria) {
     return (
-      <Badge className="border-transparent bg-amber-100 text-amber-800 hover:bg-amber-100">
+      <Pill dot="bg-amber-600" text="text-amber-800">
         Devolvido c/ avaria
-      </Badge>
+      </Pill>
     );
   }
   return (
-    <Badge className="border-transparent bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+    <Pill dot="bg-emerald-600" text="text-emerald-800">
       Devolvido
-    </Badge>
+    </Pill>
   );
 }
 
-function CountBadge({ children }: { children: React.ReactNode }) {
+function Pill({
+  dot,
+  text,
+  children,
+}: {
+  dot: string;
+  text: string;
+  children: React.ReactNode;
+}) {
   return (
-    <span className="ml-1.5 hidden h-4 min-w-[1rem] items-center justify-center rounded-full bg-muted px-1 text-[10px] font-semibold text-muted-foreground sm:inline-flex">
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide",
+        text,
+      )}
+    >
+      <span className={cn("h-1.5 w-1.5 rounded-full", dot)} />
       {children}
     </span>
+  );
+}
+
+function EmptyState({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border py-12 text-center">
+      <div className="font-display text-base font-bold">{title}</div>
+      <div className="text-sm text-muted-foreground">{desc}</div>
+    </div>
   );
 }

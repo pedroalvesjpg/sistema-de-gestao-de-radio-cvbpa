@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guards";
 import { fmtData } from "@/lib/format";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -32,73 +31,90 @@ export default async function UsuariosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-[family-name:var(--font-montserrat)] text-3xl font-bold tracking-tight">
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-6">
+        <div className="flex items-baseline gap-4">
+          <h1 className="font-display text-3xl font-extrabold tracking-tight">
             Usuários
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Quem tem acesso ao sistema. {usuarios.length}{" "}
-            {usuarios.length === 1 ? "pessoa cadastrada" : "pessoas cadastradas"}.
-          </p>
+          <span className="font-mono text-sm font-medium tabular-nums text-muted-foreground">
+            {usuarios.length}
+          </span>
         </div>
         <NovoUsuarioDialog />
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Cargo</TableHead>
-                <TableHead>Papel</TableHead>
-                <TableHead>Cadastrado em</TableHead>
-                <TableHead className="w-12 text-right">
-                  <span className="sr-only">Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {usuarios.map((u) => {
-                const isSelf = u.id === meuId;
-                return (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-medium">
-                      {u.nome}
-                      {isSelf && (
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          (você)
-                        </span>
+      <div className="overflow-hidden rounded-md border border-border bg-background">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-xs font-bold uppercase tracking-wide">
+                Nome
+              </TableHead>
+              <TableHead className="text-xs font-bold uppercase tracking-wide">
+                Email
+              </TableHead>
+              <TableHead className="text-xs font-bold uppercase tracking-wide">
+                Cargo
+              </TableHead>
+              <TableHead className="text-xs font-bold uppercase tracking-wide">
+                Papel
+              </TableHead>
+              <TableHead className="text-xs font-bold uppercase tracking-wide">
+                Cadastrado em
+              </TableHead>
+              <TableHead className="w-12 text-right">
+                <span className="sr-only">Ações</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {usuarios.map((u) => {
+              const isSelf = u.id === meuId;
+              const isAdmin = u.role === "ADMIN";
+              return (
+                <TableRow key={u.id}>
+                  <TableCell className="font-semibold">
+                    {u.nome}
+                    {isSelf && (
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        (você)
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {u.email}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {u.cargo || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide",
+                        isAdmin ? "text-primary" : "text-muted-foreground",
                       )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {u.email}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {u.cargo || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={u.role === "ADMIN" ? "default" : "secondary"}
-                      >
-                        {u.role === "ADMIN" ? "Administrador" : "Operador"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {fmtData(u.criadoEm)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <UsuarioActionsMenu user={u} isSelf={isSelf} />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    >
+                      <span
+                        className={cn(
+                          "h-1.5 w-1.5 rounded-full",
+                          isAdmin ? "bg-primary" : "bg-muted-foreground/50",
+                        )}
+                      />
+                      {isAdmin ? "Administrador" : "Operador"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="tabular-nums text-muted-foreground">
+                    {fmtData(u.criadoEm)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <UsuarioActionsMenu user={u} isSelf={isSelf} />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

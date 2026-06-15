@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -20,7 +19,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -103,9 +101,6 @@ export function NovoUsuarioDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Novo usuário</DialogTitle>
-          <DialogDescription>
-            A pessoa entrará no sistema com email e a senha que você definir agora.
-          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -148,9 +143,6 @@ export function NovoUsuarioDialog() {
                   <FormControl>
                     <Input type="password" autoComplete="new-password" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    A pessoa poderá trocar depois (próxima feature).
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

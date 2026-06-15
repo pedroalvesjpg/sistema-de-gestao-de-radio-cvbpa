@@ -2,16 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CalendarDays, ChevronRight, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventoStatusBadge } from "@/components/eventos/status-badge";
 import { cn } from "@/lib/utils";
 import { fmtData, statusEvento } from "@/lib/format";
@@ -26,6 +18,13 @@ type Evento = {
 };
 
 type StatusFilter = "todos" | "atual" | "futuro" | "passado";
+
+const filterLabels: Record<StatusFilter, string> = {
+  todos: "Todos",
+  atual: "Ao vivo",
+  futuro: "Próximos",
+  passado: "Encerrados",
+};
 
 export function EventosList({
   eventos,
@@ -62,150 +61,217 @@ export function EventosList({
 
   if (eventos.length === 0) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-          <div className="grid h-12 w-12 place-items-center rounded-full bg-secondary text-muted-foreground">
-            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden>
-              <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6V3Z" />
-            </svg>
-          </div>
-          <CardTitle className="text-base">
-            Nenhum evento {isAdmin ? "cadastrado" : "disponível"}
-          </CardTitle>
-          <CardDescription>
-            {isAdmin
-              ? "Crie o primeiro evento para começar a registrar rádios."
-              : "Volte quando a coordenação abrir um novo evento."}
-          </CardDescription>
-        </CardContent>
-      </Card>
+      <EmptyState
+        title={`Nenhum evento ${isAdmin ? "cadastrado" : "disponível"}`}
+        desc={
+          isAdmin
+            ? "Crie o primeiro evento para começar a registrar rádios."
+            : "Volte quando a coordenação abrir um novo evento."
+        }
+      />
     );
   }
 
+  const totalByFilter: Record<StatusFilter, number> = {
+    todos: eventos.length,
+    ...counts,
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="-mx-1 overflow-x-auto overflow-y-hidden px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-          <Tabs
-            value={statusFilter}
-            onValueChange={(v) => setStatusFilter(v as StatusFilter)}
-          >
-            <TabsList>
-              <TabsTrigger value="todos">
-                Todos <CountBadge>{eventos.length}</CountBadge>
-              </TabsTrigger>
-              <TabsTrigger value="atual">
-                Em andamento <CountBadge>{counts.atual}</CountBadge>
-              </TabsTrigger>
-              <TabsTrigger value="futuro">
-                Próximos <CountBadge>{counts.futuro}</CountBadge>
-              </TabsTrigger>
-              <TabsTrigger value="passado">
-                Encerrados <CountBadge>{counts.passado}</CountBadge>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 border-b border-border pb-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="-mx-1 flex overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+          <div className="flex gap-6">
+            {(Object.keys(filterLabels) as StatusFilter[]).map((f) => {
+              const active = statusFilter === f;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setStatusFilter(f)}
+                  className={cn(
+                    "relative whitespace-nowrap pb-2 text-sm font-bold uppercase tracking-wide transition-colors",
+                    active
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {filterLabels[f]}
+                  <span className="ml-1.5 font-semibold tabular-nums text-muted-foreground/70">
+                    {totalByFilter[f]}
+                  </span>
+                  {active && (
+                    <span className="absolute inset-x-0 -bottom-px h-[2px] bg-primary" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="relative w-full sm:max-w-xs">
           <Search
-            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden
           />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar evento pelo nome…"
-            className="pl-8"
+            placeholder="Buscar evento…"
+            className="pl-9"
           />
         </div>
       </div>
 
       {filtrados.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Nenhum evento encontrado com esses critérios.
-          </CardContent>
-        </Card>
+        <EmptyState
+          title="Nenhum evento"
+          desc="Nada bate com esses filtros."
+        />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtrados.map((evento) => (
-            <EventoCard key={evento.id} evento={evento} isAdmin={isAdmin} />
+        <ul className="overflow-hidden rounded-md border border-border bg-background">
+          {filtrados.map((evento, idx) => (
+            <EventoRow
+              key={evento.id}
+              evento={evento}
+              isAdmin={isAdmin}
+              first={idx === 0}
+            />
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );
 }
 
-function EventoCard({ evento, isAdmin }: { evento: Evento; isAdmin: boolean }) {
+function EventoRow({
+  evento,
+  isAdmin,
+  first,
+}: {
+  evento: Evento;
+  isAdmin: boolean;
+  first: boolean;
+}) {
   const total = evento._count.registros;
   const emAberto = evento.registros.filter((r) => !r.devolucao).length;
   const status = statusEvento(evento);
   const disabled = !isAdmin && status === "passado";
+  const isLive = status === "atual";
 
-  const inner = (
-    <Card
+  const content = (
+    <div
       className={cn(
-        "h-full transition",
-        disabled
-          ? "opacity-60"
-          : "group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring",
+        "group relative flex items-center gap-4 px-4 py-4 transition-colors sm:px-6",
+        !first && "border-t border-border",
+        !disabled && "hover:bg-secondary/60",
+        disabled && "opacity-60",
       )}
     >
-      <CardHeader className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <CardTitle className="text-lg leading-tight">{evento.nome}</CardTitle>
+      {isLive && (
+        <span
+          className="pointer-events-none absolute inset-y-0 left-0 w-[3px] bg-primary"
+          aria-hidden
+        />
+      )}
+
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="truncate font-display text-lg font-bold leading-tight">
+            {evento.nome}
+          </span>
           <EventoStatusBadge evento={evento} />
         </div>
-        <CardDescription>
+        <div className="flex items-center gap-1.5 text-xs tabular-nums text-muted-foreground">
+          <CalendarDays className="size-3.5 shrink-0" aria-hidden />
           {fmtData(evento.dataInicio)} → {fmtData(evento.dataFim)}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex items-center gap-6 text-sm">
-        <div>
-          <div className="text-2xl font-bold leading-none">{total}</div>
-          <div className="text-xs text-muted-foreground">
-            {total === 1 ? "rádio" : "rádios"}
-          </div>
         </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-6">
+        <Metric label="Saídas" value={total} />
         {total > 0 && !disabled && (
-          <div>
-            <div className="text-2xl font-bold leading-none text-primary">
-              {emAberto}
-            </div>
-            <div className="text-xs text-muted-foreground">em aberto</div>
-          </div>
+          <Metric
+            label="Em aberto"
+            value={emAberto}
+            tone={emAberto > 0 ? "primary" : "muted"}
+          />
         )}
-      </CardContent>
-    </Card>
+        {!disabled && (
+          <ChevronRight
+            className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+            aria-hidden
+          />
+        )}
+      </div>
+    </div>
   );
 
   if (disabled) {
     return (
-      <div
-        aria-disabled="true"
+      <li
+        aria-disabled
         title="Eventos encerrados só ficam disponíveis para administradores."
         className="cursor-not-allowed select-none"
       >
-        {inner}
-      </div>
+        {content}
+      </li>
     );
   }
 
   return (
-    <Link
-      href={`/eventos/${evento.id}`}
-      className="group focus-visible:outline-none"
-    >
-      {inner}
-    </Link>
+    <li>
+      <Link
+        href={`/eventos/${evento.id}`}
+        className="block focus:outline-none focus-visible:bg-secondary"
+      >
+        {content}
+      </Link>
+    </li>
   );
 }
 
-function CountBadge({ children }: { children: React.ReactNode }) {
+function Metric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: "primary" | "muted";
+}) {
   return (
-    <span className="ml-1.5 hidden h-4 min-w-[1rem] items-center justify-center rounded-full bg-muted px-1 text-[10px] font-semibold text-muted-foreground sm:inline-flex">
-      {children}
-    </span>
+    <div className="text-right">
+      <div
+        className={cn(
+          "text-xl font-black leading-none tabular-nums",
+          tone === "primary" && "text-primary",
+          tone === "muted" && "text-muted-foreground",
+        )}
+      >
+        {value}
+      </div>
+      <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-border py-16 text-center">
+      <div className="text-muted-foreground/60">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-9 w-9"
+          fill="currentColor"
+          aria-hidden
+        >
+          <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6V3Z" />
+        </svg>
+      </div>
+      <div className="font-display text-base font-bold">{title}</div>
+      <div className="max-w-xs text-sm text-muted-foreground">{desc}</div>
+    </div>
   );
 }
