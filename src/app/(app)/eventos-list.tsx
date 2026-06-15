@@ -17,10 +17,9 @@ type Evento = {
   registros: { devolucao: { id: number } | null }[];
 };
 
-type StatusFilter = "todos" | "atual" | "futuro" | "passado";
+type StatusFilter = "atual" | "futuro" | "passado";
 
 const filterLabels: Record<StatusFilter, string> = {
-  todos: "Todos",
   atual: "Ao vivo",
   futuro: "Próximos",
   passado: "Encerrados",
@@ -33,7 +32,7 @@ export function EventosList({
   eventos: Evento[];
   isAdmin: boolean;
 }) {
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("atual");
   const [query, setQuery] = useState("");
 
   const counts = useMemo(() => {
@@ -53,7 +52,7 @@ export function EventosList({
     const now = new Date();
     return eventos.filter((e) => {
       const s = statusEvento(e, now);
-      if (statusFilter !== "todos" && s !== statusFilter) return false;
+      if (s !== statusFilter) return false;
       if (q && !e.nome.toLowerCase().includes(q)) return false;
       return true;
     });
@@ -72,10 +71,7 @@ export function EventosList({
     );
   }
 
-  const totalByFilter: Record<StatusFilter, number> = {
-    todos: eventos.length,
-    ...counts,
-  };
+  const totalByFilter: Record<StatusFilter, number> = counts;
 
   return (
     <div className="space-y-5">
@@ -161,7 +157,7 @@ function EventoRow({
   const content = (
     <div
       className={cn(
-        "group relative flex items-center gap-4 px-4 py-4 transition-colors sm:px-6",
+        "group relative flex items-center gap-4 px-5 py-6 transition-colors sm:gap-6 sm:px-7",
         !first && "border-t border-border",
         !disabled && "hover:bg-secondary/60",
         disabled && "opacity-60",
@@ -174,20 +170,20 @@ function EventoRow({
         />
       )}
 
-      <div className="min-w-0 flex-1 space-y-1.5">
+      <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="truncate font-display text-lg font-bold leading-tight">
+          <span className="truncate font-display text-xl font-bold leading-tight">
             {evento.nome}
           </span>
           <EventoStatusBadge evento={evento} />
         </div>
-        <div className="flex items-center gap-1.5 text-xs tabular-nums text-muted-foreground">
-          <CalendarDays className="size-3.5 shrink-0" aria-hidden />
+        <div className="flex items-center gap-1.5 text-sm tabular-nums text-muted-foreground">
+          <CalendarDays className="size-4 shrink-0" aria-hidden />
           {fmtData(evento.dataInicio)} → {fmtData(evento.dataFim)}
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-6">
+      <div className="flex shrink-0 items-center gap-5 sm:gap-7">
         <Metric label="Saídas" value={total} />
         {total > 0 && !disabled && (
           <Metric
@@ -198,7 +194,7 @@ function EventoRow({
         )}
         {!disabled && (
           <ChevronRight
-            className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+            className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
             aria-hidden
           />
         )}
@@ -243,7 +239,7 @@ function Metric({
     <div className="text-right">
       <div
         className={cn(
-          "text-xl font-black leading-none tabular-nums",
+          "text-2xl font-black leading-none tabular-nums",
           tone === "primary" && "text-primary",
           tone === "muted" && "text-muted-foreground",
         )}

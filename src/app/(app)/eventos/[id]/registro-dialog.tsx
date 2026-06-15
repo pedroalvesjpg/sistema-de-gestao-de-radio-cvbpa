@@ -19,7 +19,7 @@ export function RegistroDialog({ eventoId }: { eventoId: number }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button>
+          <Button size="lg">
             <Plus />
             Registrar saída
           </Button>

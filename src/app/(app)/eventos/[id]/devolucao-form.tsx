@@ -107,7 +107,7 @@ export function DevolucaoForm({
         if (!o) form.reset(defaults);
       }}
     >
-      <DialogTrigger render={<Button size="sm">Marcar devolução</Button>} />
+      <DialogTrigger render={<Button>Marcar devolução</Button>} />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Marcar devolução</DialogTitle>

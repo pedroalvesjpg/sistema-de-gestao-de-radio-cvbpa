@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FotoViewer } from "@/components/foto-viewer";
 import { cn } from "@/lib/utils";
-import { codigoRegistro, fmtDataHora } from "@/lib/format";
+import { fmtDataHora } from "@/lib/format";
 import { DevolucaoForm } from "./devolucao-form";
 import { RegistroActionsMenu } from "./registro-actions-menu";
 
@@ -32,10 +32,9 @@ type Registro = {
   } | null;
 };
 
-type FilterTab = "todos" | "abertos" | "devolvidos" | "avarias";
+type FilterTab = "abertos" | "devolvidos" | "avarias";
 
 const filterLabels: Record<FilterTab, string> = {
-  todos: "Todos",
   abertos: "Em aberto",
   devolvidos: "Devolvidos",
   avarias: "Com avaria",
@@ -48,7 +47,7 @@ export function RadiosList({
   registros: Registro[];
   podeEscrever: boolean;
 }) {
-  const [tab, setTab] = useState<FilterTab>("todos");
+  const [tab, setTab] = useState<FilterTab>("abertos");
   const [query, setQuery] = useState("");
 
   const filtrados = useMemo(() => {
@@ -82,7 +81,6 @@ export function RadiosList({
   }
 
   const totalByTab: Record<FilterTab, number> = {
-    todos: total,
     abertos,
     devolvidos: devolvidosOk,
     avarias,
@@ -175,7 +173,7 @@ function RegistroRow({
   const isAberto = !registro.devolucao;
 
   return (
-    <li className="relative p-4 sm:p-6">
+    <li className="relative p-5 sm:p-6">
       {isAberto && (
         <span
           className="pointer-events-none absolute inset-y-0 left-0 w-[3px] bg-primary"
@@ -184,17 +182,14 @@ function RegistroRow({
       )}
 
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              {codigoRegistro(registro)}
+            <span className="font-display text-lg font-bold leading-tight">
+              {registro.modeloRadio}{" "}
+              <span className="text-muted-foreground">·</span>{" "}
+              <span className="font-mono">#{registro.codigoRadio}</span>
             </span>
             <DevolucaoStatus devolucao={registro.devolucao} />
-          </div>
-          <div className="mt-2 font-display text-lg font-bold leading-tight">
-            {registro.modeloRadio}{" "}
-            <span className="text-muted-foreground">·</span>{" "}
-            <span className="font-mono">#{registro.codigoRadio}</span>
           </div>
           <div className="text-sm text-muted-foreground">{registro.equipe}</div>
         </div>
@@ -248,11 +243,10 @@ function RegistroRow({
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <Button
           type="button"
           variant="outline"
-          size="sm"
           onClick={() => setFotosOpen(true)}
         >
           <Images />
