@@ -3,7 +3,6 @@
 import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -31,25 +30,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  CARGO_NENHUM,
+  CARGO_OPCOES,
+  editarUsuarioSchema,
+  type EditarUsuarioValues,
+} from "@/lib/schemas/usuario";
 import { editarUsuario } from "./actions";
-
-const CARGO_NENHUM = "__none__";
-
-const CARGO_OPCOES = [
-  { value: CARGO_NENHUM, label: "Nenhum" },
-  { value: "Diretor(a)", label: "Diretor(a)" },
-  { value: "Coordenador(a)", label: "Coordenador(a)" },
-  { value: "Auxiliar", label: "Auxiliar" },
-  { value: "Voluntário(a)", label: "Voluntário(a)" },
-];
-
-const schema = z.object({
-  nome: z.string().min(1, "Informe o nome"),
-  email: z.string().email("Email inválido"),
-  cargo: z.string(),
-});
-
-type Values = z.infer<typeof schema>;
 
 type Props = {
   user: { id: number; nome: string; email: string; cargo: string | null };
@@ -60,14 +47,14 @@ type Props = {
 export function EditarUsuarioDialog({ user, open, onOpenChange }: Props) {
   const [pending, startTransition] = useTransition();
 
-  const defaults: Values = {
+  const defaults: EditarUsuarioValues = {
     nome: user.nome,
     email: user.email,
     cargo: user.cargo ?? CARGO_NENHUM,
   };
 
-  const form = useForm<Values>({
-    resolver: zodResolver(schema),
+  const form = useForm<EditarUsuarioValues>({
+    resolver: zodResolver(editarUsuarioSchema),
     defaultValues: defaults,
   });
 
@@ -76,7 +63,7 @@ export function EditarUsuarioDialog({ user, open, onOpenChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, user.id]);
 
-  function onSubmit(values: Values) {
+  function onSubmit(values: EditarUsuarioValues) {
     startTransition(async () => {
       const result = await editarUsuario(user.id, {
         nome: values.nome,

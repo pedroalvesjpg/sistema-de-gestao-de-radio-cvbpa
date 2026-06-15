@@ -3,7 +3,6 @@
 import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -25,20 +24,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  resetarSenhaSchema,
+  type ResetarSenhaValues,
+} from "@/lib/schemas/auth";
 import { resetarSenhaUsuario } from "./actions";
 
-const schema = z
-  .object({
-    novaSenha: z.string().min(6, "Pelo menos 6 caracteres"),
-    confirmar: z.string().min(1, "Confirme a senha"),
-  })
-  .refine((v) => v.novaSenha === v.confirmar, {
-    message: "As senhas não coincidem",
-    path: ["confirmar"],
-  });
-
-type Values = z.infer<typeof schema>;
-const defaults: Values = { novaSenha: "", confirmar: "" };
+const defaults: ResetarSenhaValues = { novaSenha: "", confirmar: "" };
 
 type Props = {
   user: { id: number; nome: string };
@@ -49,8 +41,8 @@ type Props = {
 export function ResetarSenhaDialog({ user, open, onOpenChange }: Props) {
   const [pending, startTransition] = useTransition();
 
-  const form = useForm<Values>({
-    resolver: zodResolver(schema),
+  const form = useForm<ResetarSenhaValues>({
+    resolver: zodResolver(resetarSenhaSchema),
     defaultValues: defaults,
   });
 
@@ -59,7 +51,7 @@ export function ResetarSenhaDialog({ user, open, onOpenChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, user.id]);
 
-  function onSubmit(values: Values) {
+  function onSubmit(values: ResetarSenhaValues) {
     startTransition(async () => {
       const result = await resetarSenhaUsuario(user.id, values.novaSenha);
       if ("error" in result) {

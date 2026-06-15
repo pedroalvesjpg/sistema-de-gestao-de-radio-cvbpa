@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -28,31 +27,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { FotoUploader } from "@/components/foto-uploader";
+import { FotoUploader } from "@/components/foto/foto-uploader";
 import { cn } from "@/lib/utils";
+import { devolucaoSchema, type DevolucaoValues } from "@/lib/schemas/registro";
 import { criarDevolucao } from "./actions";
 
-const schema = z
-  .object({
-    possuiAvaria: z.boolean(),
-    devolvidoOutraPessoa: z.boolean(),
-    devolvidoPor: z.string().optional(),
-    observacao: z.string().optional(),
-    urlFotoRadioDevolucao: z.string().min(1, "Foto da devolução obrigatória"),
-  })
-  .refine(
-    (v) =>
-      !v.devolvidoOutraPessoa ||
-      (v.devolvidoPor && v.devolvidoPor.trim().length > 0),
-    {
-      message: "Informe o nome de quem devolveu",
-      path: ["devolvidoPor"],
-    },
-  );
-
-type Values = z.infer<typeof schema>;
-
-const defaults: Values = {
+const defaults: DevolucaoValues = {
   possuiAvaria: false,
   devolvidoOutraPessoa: false,
   devolvidoPor: "",
@@ -74,12 +54,12 @@ export function DevolucaoForm({
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const form = useForm<Values>({
-    resolver: zodResolver(schema),
+  const form = useForm<DevolucaoValues>({
+    resolver: zodResolver(devolucaoSchema),
     defaultValues: defaults,
   });
 
-  function onSubmit(values: Values) {
+  function onSubmit(values: DevolucaoValues) {
     startTransition(async () => {
       const result = await criarDevolucao(registroId, {
         possuiAvaria: values.possuiAvaria,

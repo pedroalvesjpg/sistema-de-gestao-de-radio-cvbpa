@@ -4,7 +4,6 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -17,31 +16,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { eventoSchema, type EventoValues } from "@/lib/schemas/evento";
 import { criarEvento } from "../actions";
-
-const schema = z
-  .object({
-    nome: z.string().min(1, "Informe o nome"),
-    dataInicio: z.string().min(1, "Selecione a data de início"),
-    dataFim: z.string().min(1, "Selecione a data de fim"),
-  })
-  .refine((v) => new Date(v.dataFim) >= new Date(v.dataInicio), {
-    message: "Fim deve ser depois do início",
-    path: ["dataFim"],
-  });
-
-type Values = z.infer<typeof schema>;
 
 export function NovoEventoForm() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  const form = useForm<Values>({
-    resolver: zodResolver(schema),
+  const form = useForm<EventoValues>({
+    resolver: zodResolver(eventoSchema),
     defaultValues: { nome: "", dataInicio: "", dataFim: "" },
   });
 
-  function onSubmit(values: Values) {
+  function onSubmit(values: EventoValues) {
     startTransition(async () => {
       const result = await criarEvento(values);
       if ("error" in result) {

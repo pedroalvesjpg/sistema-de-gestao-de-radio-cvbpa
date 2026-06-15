@@ -3,7 +3,6 @@
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -18,24 +17,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Logo } from "@/components/brand/logo";
+import { loginSchema, type LoginValues } from "@/lib/schemas/auth";
 import { loginAction } from "./actions";
-
-const schema = z.object({
-  email: z.string().email("Email inválido"),
-  password: z.string().min(1, "Informe a senha"),
-});
-
-type Values = z.infer<typeof schema>;
 
 export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   const [pending, startTransition] = useTransition();
 
-  const form = useForm<Values>({
-    resolver: zodResolver(schema),
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  function onSubmit(values: Values) {
+  function onSubmit(values: LoginValues) {
     startTransition(async () => {
       const result = await loginAction({ ...values, callbackUrl });
       if (result?.error) {

@@ -3,7 +3,6 @@
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -17,32 +16,24 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { trocarSenhaSchema, type TrocarSenhaValues } from "@/lib/schemas/auth";
 import { trocarPropriaSenha } from "./actions";
 
-const schema = z
-  .object({
-    senhaAtual: z.string().min(1, "Informe a senha atual"),
-    novaSenha: z.string().min(6, "Pelo menos 6 caracteres"),
-    confirmar: z.string().min(1, "Confirme a nova senha"),
-  })
-  .refine((v) => v.novaSenha === v.confirmar, {
-    message: "As senhas não coincidem",
-    path: ["confirmar"],
-  });
-
-type Values = z.infer<typeof schema>;
-
-const defaults: Values = { senhaAtual: "", novaSenha: "", confirmar: "" };
+const defaults: TrocarSenhaValues = {
+  senhaAtual: "",
+  novaSenha: "",
+  confirmar: "",
+};
 
 export function TrocarSenhaForm() {
   const [pending, startTransition] = useTransition();
 
-  const form = useForm<Values>({
-    resolver: zodResolver(schema),
+  const form = useForm<TrocarSenhaValues>({
+    resolver: zodResolver(trocarSenhaSchema),
     defaultValues: defaults,
   });
 
-  function onSubmit(values: Values) {
+  function onSubmit(values: TrocarSenhaValues) {
     startTransition(async () => {
       const result = await trocarPropriaSenha({
         senhaAtual: values.senhaAtual,

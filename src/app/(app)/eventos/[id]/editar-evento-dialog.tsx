@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -25,20 +24,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toDatetimeLocal } from "@/lib/format";
+import { eventoSchema, type EventoValues } from "@/lib/schemas/evento";
 import { editarEvento } from "../actions";
-
-const schema = z
-  .object({
-    nome: z.string().min(1, "Informe o nome"),
-    dataInicio: z.string().min(1, "Selecione a data de início"),
-    dataFim: z.string().min(1, "Selecione a data de fim"),
-  })
-  .refine((v) => new Date(v.dataFim) >= new Date(v.dataInicio), {
-    message: "Fim deve ser depois do início",
-    path: ["dataFim"],
-  });
-
-type Values = z.infer<typeof schema>;
 
 type Props = {
   evento: { id: number; nome: string; dataInicio: Date; dataFim: Date };
@@ -49,14 +36,14 @@ type Props = {
 export function EditarEventoDialog({ evento, open, onOpenChange }: Props) {
   const [pending, startTransition] = useTransition();
 
-  const defaults: Values = {
+  const defaults: EventoValues = {
     nome: evento.nome,
     dataInicio: toDatetimeLocal(evento.dataInicio),
     dataFim: toDatetimeLocal(evento.dataFim),
   };
 
-  const form = useForm<Values>({
-    resolver: zodResolver(schema),
+  const form = useForm<EventoValues>({
+    resolver: zodResolver(eventoSchema),
     defaultValues: defaults,
   });
 
@@ -69,7 +56,7 @@ export function EditarEventoDialog({ evento, open, onOpenChange }: Props) {
     setLastOpen(false);
   }
 
-  function onSubmit(values: Values) {
+  function onSubmit(values: EventoValues) {
     startTransition(async () => {
       const result = await editarEvento(evento.id, values);
       if ("error" in result) {

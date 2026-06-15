@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Images, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FotoViewer } from "@/components/foto-viewer";
+import { FotoViewer } from "@/components/foto/foto-viewer";
 import { cn } from "@/lib/utils";
 import { fmtDataHora } from "@/lib/format";
 import { DevolucaoForm } from "./devolucao-form";

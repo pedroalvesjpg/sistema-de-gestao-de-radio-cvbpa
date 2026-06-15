@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -31,29 +30,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  CARGO_NENHUM,
+  CARGO_OPCOES,
+  novoUsuarioSchema,
+  type NovoUsuarioValues,
+} from "@/lib/schemas/usuario";
 import { criarUsuario } from "./actions";
 
-const CARGO_NENHUM = "__none__";
-
-const CARGO_OPCOES = [
-  { value: CARGO_NENHUM, label: "Nenhum" },
-  { value: "Diretor(a)", label: "Diretor(a)" },
-  { value: "Coordenador(a)", label: "Coordenador(a)" },
-  { value: "Auxiliar", label: "Auxiliar" },
-  { value: "Voluntário(a)", label: "Voluntário(a)" },
-];
-
-const schema = z.object({
-  nome: z.string().min(1, "Informe o nome"),
-  email: z.string().email("Email inválido"),
-  senha: z.string().min(6, "Senha precisa de pelo menos 6 caracteres"),
-  role: z.enum(["ADMIN", "COMUM"]),
-  cargo: z.string(),
-});
-
-type Values = z.infer<typeof schema>;
-
-const defaults: Values = {
+const defaults: NovoUsuarioValues = {
   nome: "",
   email: "",
   senha: "",
@@ -65,12 +50,12 @@ export function NovoUsuarioDialog() {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const form = useForm<Values>({
-    resolver: zodResolver(schema),
+  const form = useForm<NovoUsuarioValues>({
+    resolver: zodResolver(novoUsuarioSchema),
     defaultValues: defaults,
   });
 
-  function onSubmit(values: Values) {
+  function onSubmit(values: NovoUsuarioValues) {
     startTransition(async () => {
       const result = await criarUsuario({
         nome: values.nome,
