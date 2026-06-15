@@ -20,8 +20,6 @@ export default async function LoginPage({ searchParams }: Props) {
           <path d="M35 0 H65 V35 H100 V65 H65 V100 H35 V65 H0 V35 H35 Z" />
         </svg>
 
-        <Logo variant="horizontal" className="relative z-10" />
-
         <div className="relative z-10 max-w-md space-y-3">
           <div className="text-xs font-bold uppercase tracking-wider text-white/60">
             Cruz Vermelha Brasileira · RADCOM

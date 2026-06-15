@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import {
   Form,
   FormControl,
@@ -45,19 +46,20 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   }
 
   return (
-    <div className="w-full max-w-sm space-y-10">
-      <div className="space-y-5 lg:hidden">
+    <div className="w-full max-w-sm space-y-8 rounded-md border border-border bg-background p-8 sm:p-10">
+      <div className="flex flex-col items-center gap-4 text-center">
         <Logo variant="stacked" />
+        <div className="space-y-1">
+          <h1 className="font-display text-2xl font-extrabold tracking-tight">
+            Autenticação
+          </h1>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Sistema Interno de Radiocomunicações
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Acesso ao sistema
-        </div>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Entrar.
-        </h1>
-      </div>
+      <Separator />
 
       <Form {...form}>
         <form
@@ -104,6 +106,9 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
           <Button type="submit" className="w-full" disabled={pending}>
             {pending ? "Entrando…" : "Entrar"}
           </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            Contate a coordenação para obter seus dados de acesso.
+          </p>
         </form>
       </Form>
     </div>
