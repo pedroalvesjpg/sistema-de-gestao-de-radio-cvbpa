@@ -23,7 +23,7 @@ export function MobileBottomNav({ isAdmin }: { isAdmin: boolean }) {
     },
     {
       href: "/recebedores",
-      label: "Recebedores",
+      label: "Pessoas",
       icon: IdCard,
       match: (p: string) => p.startsWith("/recebedores"),
     },
@@ -48,7 +48,7 @@ export function MobileBottomNav({ isAdmin }: { isAdmin: boolean }) {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed px-6 inset-x-0 bottom-0 z-40 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="mx-auto flex max-w-md">
         {items.map((item) => {
