@@ -13,6 +13,16 @@ export function MainNav({ isAdmin }: { isAdmin: boolean }) {
       label: "Eventos",
       match: (p: string) => p === "/" || p.startsWith("/eventos"),
     },
+    {
+      href: "/radios",
+      label: "Rádios",
+      match: (p: string) => p.startsWith("/radios"),
+    },
+    {
+      href: "/recebedores",
+      label: "Recebedores",
+      match: (p: string) => p.startsWith("/recebedores"),
+    },
     ...(isAdmin
       ? [
           {

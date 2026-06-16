@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-export type TipoFoto = "rg" | "saida" | "devolucao";
+export type TipoFoto = "rg" | "saida" | "devolucao" | "perfil";
 
 export const BUCKET = "fotos-radios";
 export const MAX_BYTES = 5 * 1024 * 1024; // 5 MB

@@ -8,76 +8,67 @@ import { registrarAcao } from "@/lib/audit";
 import { deleteFoto } from "@/lib/storage";
 
 type CriarRegistroInput = {
-  modeloRadio: string;
-  codigoRadio: string;
-  equipe: string;
-  nomeResponsavel: string;
-  rgResponsavel: string;
+  radioId: number;
+  recebedorId: number;
   observacao?: string;
   urlFotoRg: string;
   urlFotoRadioSaida: string;
 };
 
-type ParsedRegistro =
-  | { ok: true; data: {
-      modeloRadio: string;
-      codigoRadio: string;
-      equipe: string;
-      nomeResponsavel: string;
-      rgResponsavel: string;
-      observacao: string | null;
-      urlFotoRg: string;
-      urlFotoRadioSaida: string;
-    } }
-  | { ok: false; error: string };
-
-function validarRegistro(input: CriarRegistroInput): ParsedRegistro {
-  const modeloRadio = input.modeloRadio.trim();
-  const codigoRadio = input.codigoRadio.trim();
-  const equipe = input.equipe.trim();
-  const nomeResponsavel = input.nomeResponsavel.trim();
-  const rgResponsavel = input.rgResponsavel.trim();
-  const observacao = input.observacao?.trim() || null;
-  const urlFotoRg = input.urlFotoRg.trim();
-  const urlFotoRadioSaida = input.urlFotoRadioSaida.trim();
-
-  if (!modeloRadio || !codigoRadio || !equipe || !nomeResponsavel || !rgResponsavel) {
-    return { ok: false, error: "Preencha modelo, código, equipe, nome e RG." };
-  }
-  if (!urlFotoRg || !urlFotoRadioSaida) {
-    return { ok: false, error: "Faça upload da foto do RG e do rádio." };
-  }
-  return {
-    ok: true,
-    data: {
-      modeloRadio,
-      codigoRadio,
-      equipe,
-      nomeResponsavel,
-      rgResponsavel,
-      observacao,
-      urlFotoRg,
-      urlFotoRadioSaida,
-    },
-  };
-}
-
-export async function criarRegistro(eventoId: number, input: CriarRegistroInput) {
+export async function criarRegistro(
+  eventoId: number,
+  input: CriarRegistroInput,
+) {
   const session = await requireUser();
 
   const evento = await prisma.evento.findUnique({ where: { id: eventoId } });
   if (!evento) return { error: "Evento não encontrado." } as const;
   if (evento.dataFim < new Date()) {
-    return { error: "Evento já encerrado — não é possível registrar saída." } as const;
+    return {
+      error: "Evento já encerrado — não é possível registrar saída.",
+    } as const;
   }
 
-  const parsed = validarRegistro(input);
-  if (!parsed.ok) return { error: parsed.error } as const;
+  const urlFotoRg = input.urlFotoRg.trim();
+  const urlFotoRadioSaida = input.urlFotoRadioSaida.trim();
+  const observacao = input.observacao?.trim() || null;
+
+  if (!urlFotoRg || !urlFotoRadioSaida) {
+    return { error: "Faça upload da foto do RG e do rádio." } as const;
+  }
+
+  const [radio, recebedor] = await Promise.all([
+    prisma.radio.findUnique({
+      where: { id: input.radioId },
+      select: { id: true, numeroPatrimonio: true, marca: true, modelo: true },
+    }),
+    prisma.recebedor.findUnique({
+      where: { id: input.recebedorId },
+      select: { id: true, nome: true, departamento: true },
+    }),
+  ]);
+  if (!radio) return { error: "Rádio não encontrado." } as const;
+  if (!recebedor) return { error: "Recebedor não encontrado." } as const;
+
+  // Rádio só pode estar em um registro sem devolução por vez.
+  const emUso = await prisma.registro.findFirst({
+    where: { radioId: radio.id, devolucao: { is: null } },
+    select: { evento: { select: { nome: true } } },
+  });
+  if (emUso) {
+    return {
+      error: `Esse rádio ainda está em campo no evento "${emUso.evento.nome}".`,
+    } as const;
+  }
 
   const registro = await prisma.registro.create({
     data: {
       eventoId,
-      ...parsed.data,
+      radioId: radio.id,
+      recebedorId: recebedor.id,
+      urlFotoRg,
+      urlFotoRadioSaida,
+      observacao,
       criadoPorId: Number(session.user.id),
     },
     select: { id: true },
@@ -87,65 +78,18 @@ export async function criarRegistro(eventoId: number, input: CriarRegistroInput)
     acao: "REGISTRO_CRIADO",
     entidade: "Registro",
     entidadeId: registro.id,
-    resumo: `Registrou saída de ${parsed.data.modeloRadio} #${parsed.data.codigoRadio} para ${parsed.data.nomeResponsavel} (${parsed.data.equipe}) no evento "${evento.nome}"`,
-    detalhes: { eventoId, ...parsed.data },
-  });
-
-  revalidatePath(`/eventos/${eventoId}`);
-  return { ok: true } as const;
-}
-
-export async function editarRegistro(registroId: number, input: CriarRegistroInput) {
-  const session = await requireUser();
-  const isAdmin = session.user.role === "ADMIN";
-
-  const registro = await prisma.registro.findUnique({
-    where: { id: registroId },
-    include: { evento: true },
-  });
-  if (!registro) return { error: "Registro não encontrado." } as const;
-
-  if (!isAdmin && registro.evento.dataFim < new Date()) {
-    return { error: "Evento já encerrado." } as const;
-  }
-
-  const parsed = validarRegistro(input);
-  if (!parsed.ok) return { error: parsed.error } as const;
-
-  await prisma.registro.update({
-    where: { id: registroId },
-    data: parsed.data,
-  });
-
-  // Limpa fotos antigas do storage se foram trocadas (não awaitar — fire & forget).
-  if (registro.urlFotoRg !== parsed.data.urlFotoRg) {
-    deleteFoto(registro.urlFotoRg).catch(() => {});
-  }
-  if (registro.urlFotoRadioSaida !== parsed.data.urlFotoRadioSaida) {
-    deleteFoto(registro.urlFotoRadioSaida).catch(() => {});
-  }
-
-  await registrarAcao({
-    acao: "REGISTRO_EDITADO",
-    entidade: "Registro",
-    entidadeId: registroId,
-    resumo: `Editou registro ${parsed.data.modeloRadio} #${parsed.data.codigoRadio}`,
+    resumo: `Registrou saída de ${radio.numeroPatrimonio} (${radio.marca} ${radio.modelo}) para ${recebedor.nome} (${recebedor.departamento}) no evento "${evento.nome}"`,
     detalhes: {
-      antes: {
-        modeloRadio: registro.modeloRadio,
-        codigoRadio: registro.codigoRadio,
-        equipe: registro.equipe,
-        nomeResponsavel: registro.nomeResponsavel,
-        rgResponsavel: registro.rgResponsavel,
-        observacao: registro.observacao,
-        urlFotoRg: registro.urlFotoRg,
-        urlFotoRadioSaida: registro.urlFotoRadioSaida,
-      },
-      depois: parsed.data,
+      eventoId,
+      radioId: radio.id,
+      recebedorId: recebedor.id,
+      observacao,
+      urlFotoRg,
+      urlFotoRadioSaida,
     },
   });
 
-  revalidatePath(`/eventos/${registro.eventoId}`);
+  revalidatePath(`/eventos/${eventoId}`);
   return { ok: true } as const;
 }
 
@@ -155,7 +99,12 @@ export async function desvincularRegistro(registroId: number) {
 
   const registro = await prisma.registro.findUnique({
     where: { id: registroId },
-    include: { evento: true, devolucao: true },
+    include: {
+      evento: true,
+      devolucao: true,
+      radio: { select: { numeroPatrimonio: true } },
+      recebedor: { select: { nome: true } },
+    },
   });
   if (!registro) return { error: "Registro não encontrado." } as const;
   if (!isAdmin && registro.evento.dataFim < new Date()) {
@@ -189,15 +138,12 @@ export async function desvincularRegistro(registroId: number) {
     acao: "REGISTRO_DESVINCULADO",
     entidade: "Registro",
     entidadeId: registroId,
-    resumo: `Desvinculou ${registro.modeloRadio} #${registro.codigoRadio} de "${registro.evento.nome}"${registro.devolucao ? " (tinha devolução, foi apagada junto)" : ""}`,
+    resumo: `Desvinculou ${registro.radio.numeroPatrimonio} (${registro.recebedor.nome}) de "${registro.evento.nome}"${registro.devolucao ? " (tinha devolução, foi apagada junto)" : ""}`,
     detalhes: {
       eventoId: registro.eventoId,
       eventoNome: registro.evento.nome,
-      modeloRadio: registro.modeloRadio,
-      codigoRadio: registro.codigoRadio,
-      equipe: registro.equipe,
-      nomeResponsavel: registro.nomeResponsavel,
-      rgResponsavel: registro.rgResponsavel,
+      radioId: registro.radioId,
+      recebedorId: registro.recebedorId,
       observacao: registro.observacao,
       tinhaDevolucao: !!registro.devolucao,
       devolucao: registro.devolucao
@@ -222,15 +168,24 @@ type CriarDevolucaoInput = {
   urlFotoRadioDevolucao: string;
 };
 
-export async function criarDevolucao(registroId: number, input: CriarDevolucaoInput) {
+export async function criarDevolucao(
+  registroId: number,
+  input: CriarDevolucaoInput,
+) {
   const session = await requireUser();
 
   const registro = await prisma.registro.findUnique({
     where: { id: registroId },
-    include: { evento: true, devolucao: true },
+    include: {
+      evento: true,
+      devolucao: true,
+      radio: { select: { numeroPatrimonio: true } },
+    },
   });
   if (!registro) return { error: "Registro não encontrado." } as const;
-  if (registro.devolucao) return { error: "Esse rádio já foi devolvido." } as const;
+  if (registro.devolucao) {
+    return { error: "Esse rádio já foi devolvido." } as const;
+  }
   if (registro.evento.dataFim < new Date()) {
     return { error: "Evento já encerrado." } as const;
   }
@@ -259,7 +214,7 @@ export async function criarDevolucao(registroId: number, input: CriarDevolucaoIn
     acao: "DEVOLUCAO_CRIADA",
     entidade: "Devolucao",
     entidadeId: devolucao.id,
-    resumo: `Marcou devolução de ${registro.modeloRadio} #${registro.codigoRadio}${input.possuiAvaria ? " (COM AVARIA)" : ""}`,
+    resumo: `Marcou devolução de ${registro.radio.numeroPatrimonio}${input.possuiAvaria ? " (COM AVARIA)" : ""}`,
     detalhes: {
       registroId,
       eventoId: registro.eventoId,
@@ -280,7 +235,11 @@ export async function cancelarDevolucao(registroId: number) {
 
   const registro = await prisma.registro.findUnique({
     where: { id: registroId },
-    include: { evento: true, devolucao: true },
+    include: {
+      evento: true,
+      devolucao: true,
+      radio: { select: { numeroPatrimonio: true } },
+    },
   });
   if (!registro) return { error: "Registro não encontrado." } as const;
   if (!registro.devolucao) {
@@ -294,8 +253,7 @@ export async function cancelarDevolucao(registroId: number) {
     registroId,
     eventoId: registro.eventoId,
     eventoNome: registro.evento.nome,
-    modeloRadio: registro.modeloRadio,
-    codigoRadio: registro.codigoRadio,
+    radioPatrimonio: registro.radio.numeroPatrimonio,
     possuiAvaria: registro.devolucao.possuiAvaria,
     devolvidoPor: registro.devolucao.devolvidoPor,
     observacao: registro.devolucao.observacao,
@@ -311,7 +269,7 @@ export async function cancelarDevolucao(registroId: number) {
     acao: "DEVOLUCAO_CANCELADA",
     entidade: "Devolucao",
     entidadeId: registro.devolucao.id,
-    resumo: `Cancelou devolução de ${registro.modeloRadio} #${registro.codigoRadio}${registro.devolucao.possuiAvaria ? " (que estava marcada com AVARIA)" : ""}`,
+    resumo: `Cancelou devolução de ${registro.radio.numeroPatrimonio}${registro.devolucao.possuiAvaria ? " (que estava marcada com AVARIA)" : ""}`,
     detalhes: snapshot,
   });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { MoreVertical, Pencil, RotateCcw, Unlink } from "lucide-react";
+import { MoreVertical, RotateCcw, Unlink } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,25 +23,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cancelarDevolucao, desvincularRegistro } from "./actions";
-import { EditarRegistroDialog } from "./editar-registro-dialog";
 
 type Registro = {
   id: number;
-  modeloRadio: string;
-  codigoRadio: string;
-  equipe: string;
-  nomeResponsavel: string;
-  rgResponsavel: string;
-  observacao: string | null;
-  urlFotoRg: string;
-  urlFotoRadioSaida: string;
+  radio: { numeroPatrimonio: string };
+  recebedor: { nome: string };
   devolucao: { id: number } | null;
 };
 
 type ConfirmKind = "desvincular" | "cancelarDevolucao" | null;
 
 export function RegistroActionsMenu({ registro }: { registro: Registro }) {
-  const [editOpen, setEditOpen] = useState(false);
   const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const [pending, startTransition] = useTransition();
 
@@ -71,7 +63,7 @@ export function RegistroActionsMenu({ registro }: { registro: Registro }) {
     });
   }
 
-  const label = `${registro.modeloRadio} #${registro.codigoRadio}`;
+  const label = `${registro.radio.numeroPatrimonio} · ${registro.recebedor.nome}`;
 
   return (
     <>
@@ -88,10 +80,6 @@ export function RegistroActionsMenu({ registro }: { registro: Registro }) {
           }
         />
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setEditOpen(true)}>
-            <Pencil />
-            Editar registro
-          </DropdownMenuItem>
           {registro.devolucao && (
             <DropdownMenuItem
               onClick={() => setConfirmKind("cancelarDevolucao")}
@@ -100,7 +88,7 @@ export function RegistroActionsMenu({ registro }: { registro: Registro }) {
               Cancelar devolução
             </DropdownMenuItem>
           )}
-          <DropdownMenuSeparator />
+          {registro.devolucao && <DropdownMenuSeparator />}
           <DropdownMenuItem
             variant="destructive"
             onClick={() => setConfirmKind("desvincular")}
@@ -110,12 +98,6 @@ export function RegistroActionsMenu({ registro }: { registro: Registro }) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <EditarRegistroDialog
-        registro={registro}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-      />
 
       <AlertDialog
         open={confirmKind !== null}
@@ -133,7 +115,9 @@ export function RegistroActionsMenu({ registro }: { registro: Registro }) {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel disabled={pending}>
+                  Cancelar
+                </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={(e) => {
                     e.preventDefault();
@@ -151,7 +135,9 @@ export function RegistroActionsMenu({ registro }: { registro: Registro }) {
           ) : (
             <>
               <AlertDialogHeader>
-                <AlertDialogTitle>Cancelar devolução de {label}?</AlertDialogTitle>
+                <AlertDialogTitle>
+                  Cancelar devolução de {label}?
+                </AlertDialogTitle>
                 <AlertDialogDescription>
                   O rádio volta ao status &quot;Em aberto&quot;. Use quando a
                   devolução tiver sido marcada por engano.

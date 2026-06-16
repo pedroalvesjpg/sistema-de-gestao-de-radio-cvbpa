@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guards";
 import { fmtData } from "@/lib/format";
+import { getSignedUrl } from "@/lib/storage";
 import { PapelBadge } from "@/components/eventos/status-badge";
 import { TrocarSenhaForm } from "./trocar-senha-form";
+import { PerfilFotoForm } from "./perfil-foto-form";
 
 export default async function PerfilPage() {
   const session = await requireUser();
@@ -14,6 +16,7 @@ export default async function PerfilPage() {
       cargo: true,
       role: true,
       criadoEm: true,
+      fotoPerfilUrl: true,
     },
   });
   if (!user) {
@@ -24,6 +27,10 @@ export default async function PerfilPage() {
     );
   }
 
+  const fotoUrl = user.fotoPerfilUrl
+    ? await getSignedUrl(user.fotoPerfilUrl)
+    : null;
+
   return (
     <div className="mx-auto max-w-2xl space-y-10">
       <div className="border-b border-border pb-6">
@@ -31,6 +38,13 @@ export default async function PerfilPage() {
           Meu perfil
         </h1>
       </div>
+
+      <section className="space-y-4">
+        <h2 className="font-display text-lg font-extrabold tracking-tight">
+          Foto de perfil
+        </h2>
+        <PerfilFotoForm initialUrl={fotoUrl} nome={user.nome} />
+      </section>
 
       <section className="space-y-4">
         <div className="flex items-baseline justify-between gap-4">

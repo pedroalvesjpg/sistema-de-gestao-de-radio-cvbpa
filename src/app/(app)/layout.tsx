@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { signOut } from "@/auth";
 import { requireUser } from "@/lib/auth-guards";
+import { prisma } from "@/lib/prisma";
+import { getSignedUrl } from "@/lib/storage";
 import { Logo } from "@/components/brand/logo";
 import { MainNav } from "@/components/nav/main-nav";
 import { MobileBottomNav } from "@/components/nav/mobile-bottom-nav";
 import { PapelBadge } from "@/components/eventos/status-badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { iniciais } from "@/lib/format";
 import {
   DropdownMenu,
@@ -29,6 +31,14 @@ export default async function AppLayout({
   const isAdmin = user.role === "ADMIN";
   const papelLabel = isAdmin ? "Administrador" : "Operador";
 
+  const dbUser = await prisma.user.findUnique({
+    where: { id: Number(user.id) },
+    select: { fotoPerfilUrl: true },
+  });
+  const fotoUrl = dbUser?.fotoPerfilUrl
+    ? await getSignedUrl(dbUser.fotoPerfilUrl)
+    : null;
+
   return (
     <div className="flex min-h-svh flex-col bg-background">
       <div className="h-[3px] w-full bg-primary" aria-hidden />
@@ -48,6 +58,7 @@ export default async function AppLayout({
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-3 rounded-full p-1 pr-3 outline-none transition hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring">
               <Avatar className="h-8 w-8">
+                {fotoUrl && <AvatarImage src={fotoUrl} alt={user.name ?? ""} />}
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                   {iniciais(user.name)}
                 </AvatarFallback>

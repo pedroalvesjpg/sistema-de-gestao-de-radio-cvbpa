@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
@@ -16,16 +15,34 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Combobox } from "@/components/ui/combobox";
 import { FotoUploader } from "@/components/foto/foto-uploader";
 import { registroSchema, type RegistroValues } from "@/lib/schemas/registro";
 import { criarRegistro } from "./actions";
 
+export type RadioOpcao = {
+  id: number;
+  numeroPatrimonio: string;
+  marca: string;
+  modelo: string;
+};
+
+export type RecebedorOpcao = {
+  id: number;
+  nome: string;
+  departamento: string;
+};
+
+type Props = {
+  eventoId: number;
+  radios: RadioOpcao[];
+  recebedores: RecebedorOpcao[];
+  onSuccess?: () => void;
+};
+
 const defaults: RegistroValues = {
-  modeloRadio: "",
-  codigoRadio: "",
-  equipe: "",
-  nomeResponsavel: "",
-  rgResponsavel: "",
+  radioId: 0,
+  recebedorId: 0,
   observacao: "",
   urlFotoRg: "",
   urlFotoRadioSaida: "",
@@ -33,12 +50,12 @@ const defaults: RegistroValues = {
 
 export function RegistroForm({
   eventoId,
+  radios,
+  recebedores,
   onSuccess,
-}: {
-  eventoId: number;
-  onSuccess?: () => void;
-}) {
+}: Props) {
   const [pending, startTransition] = useTransition();
+
   const form = useForm<RegistroValues>({
     resolver: zodResolver(registroSchema),
     defaultValues: defaults,
@@ -57,78 +74,94 @@ export function RegistroForm({
     });
   }
 
+  if (radios.length === 0 || recebedores.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+        {radios.length === 0 && (
+          <p>
+            Nenhum rádio cadastrado. Cadastre em <strong>Rádios</strong> antes
+            de registrar uma saída.
+          </p>
+        )}
+        {recebedores.length === 0 && (
+          <p>
+            Nenhum recebedor cadastrado. Cadastre em{" "}
+            <strong>Recebedores</strong> antes de registrar uma saída.
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField
-            name="modeloRadio"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Modelo do rádio</FormLabel>
-                <FormControl>
-                  <Input placeholder="Baofeng UV-82" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="codigoRadio"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Código</FormLabel>
-                <FormControl>
-                  <Input placeholder="25" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4"
+        noValidate
+      >
         <FormField
-          name="equipe"
+          name="radioId"
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Equipe</FormLabel>
+              <FormLabel>Rádio</FormLabel>
               <FormControl>
-                <Input placeholder="Equipe do Vice Presidente Abel" {...field} />
+                <Combobox
+                  items={radios}
+                  value={field.value || null}
+                  onChange={field.onChange}
+                  getKey={(r) => r.id}
+                  getSearchText={(r) =>
+                    `${r.numeroPatrimonio} ${r.marca} ${r.modelo}`
+                  }
+                  renderItem={(r) => (
+                    <>
+                      <span className="font-mono font-bold uppercase tracking-wider">
+                        {r.numeroPatrimonio}
+                      </span>{" "}
+                      <span className="text-muted-foreground">
+                        · {r.marca} {r.modelo}
+                      </span>
+                    </>
+                  )}
+                  placeholder="Selecione um rádio…"
+                  searchPlaceholder="Buscar por patrimônio, marca, modelo…"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField
-            name="nomeResponsavel"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome do responsável</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nome completo" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="rgResponsavel"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>RG</FormLabel>
-                <FormControl>
-                  <Input placeholder="00.000.000-0" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          name="recebedorId"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Recebedor</FormLabel>
+              <FormControl>
+                <Combobox
+                  items={recebedores}
+                  value={field.value || null}
+                  onChange={field.onChange}
+                  getKey={(r) => r.id}
+                  getSearchText={(r) => `${r.nome} ${r.departamento}`}
+                  renderItem={(r) => (
+                    <>
+                      {r.nome}{" "}
+                      <span className="text-muted-foreground">
+                        · {r.departamento}
+                      </span>
+                    </>
+                  )}
+                  placeholder="Selecione um recebedor…"
+                  searchPlaceholder="Buscar por nome ou departamento…"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
             name="urlFotoRg"

@@ -13,6 +13,14 @@ export type AcaoAudit =
   | "EVENTO_CRIADO"
   | "EVENTO_ATUALIZADO"
   | "EVENTO_DELETADO"
+  // Radio
+  | "RADIO_CRIADO"
+  | "RADIO_ATUALIZADO"
+  | "RADIO_DELETADO"
+  // Recebedor
+  | "RECEBEDOR_CRIADO"
+  | "RECEBEDOR_ATUALIZADO"
+  | "RECEBEDOR_DELETADO"
   // Registro
   | "REGISTRO_CRIADO"
   | "REGISTRO_EDITADO"
@@ -31,6 +39,12 @@ export const RotuloAcao: Record<AcaoAudit, string> = {
   EVENTO_CRIADO: "Criou evento",
   EVENTO_ATUALIZADO: "Editou evento",
   EVENTO_DELETADO: "Excluiu evento",
+  RADIO_CRIADO: "Cadastrou rádio",
+  RADIO_ATUALIZADO: "Editou rádio",
+  RADIO_DELETADO: "Excluiu rádio",
+  RECEBEDOR_CRIADO: "Cadastrou recebedor",
+  RECEBEDOR_ATUALIZADO: "Editou recebedor",
+  RECEBEDOR_DELETADO: "Excluiu recebedor",
   REGISTRO_CRIADO: "Registrou saída de rádio",
   REGISTRO_EDITADO: "Editou registro",
   REGISTRO_DESVINCULADO: "Desvinculou rádio",
@@ -38,7 +52,13 @@ export const RotuloAcao: Record<AcaoAudit, string> = {
   DEVOLUCAO_CANCELADA: "Cancelou devolução",
 };
 
-type EntidadeAudit = "User" | "Evento" | "Registro" | "Devolucao";
+type EntidadeAudit =
+  | "User"
+  | "Evento"
+  | "Radio"
+  | "Recebedor"
+  | "Registro"
+  | "Devolucao";
 
 type RegistrarInput = {
   acao: AcaoAudit;

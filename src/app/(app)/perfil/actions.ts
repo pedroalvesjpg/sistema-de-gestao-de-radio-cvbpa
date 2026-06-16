@@ -1,9 +1,11 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { compare, hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guards";
 import { registrarAcao } from "@/lib/audit";
+import { deleteFoto } from "@/lib/storage";
 
 type TrocarSenhaInput = {
   senhaAtual: string;
@@ -42,5 +44,39 @@ export async function trocarPropriaSenha(input: TrocarSenhaInput) {
     resumo: `${user.nome} trocou a própria senha`,
   });
 
+  return { ok: true } as const;
+}
+
+export async function atualizarFotoPerfil(path: string) {
+  const session = await requireUser();
+  const userId = Number(session.user.id);
+  const novo = path.trim();
+  if (!novo) return { error: "Foto inválida." } as const;
+
+  const antes = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { fotoPerfilUrl: true, nome: true },
+  });
+  if (!antes) return { error: "Sessão inválida." } as const;
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { fotoPerfilUrl: novo },
+  });
+
+  // Limpa foto anterior do storage (fire & forget).
+  if (antes.fotoPerfilUrl && antes.fotoPerfilUrl !== novo) {
+    deleteFoto(antes.fotoPerfilUrl).catch(() => {});
+  }
+
+  await registrarAcao({
+    acao: "USER_ATUALIZADO",
+    entidade: "User",
+    entidadeId: userId,
+    resumo: `${antes.nome} atualizou a própria foto de perfil`,
+  });
+
+  revalidatePath("/perfil");
+  revalidatePath("/", "layout");
   return { ok: true } as const;
 }

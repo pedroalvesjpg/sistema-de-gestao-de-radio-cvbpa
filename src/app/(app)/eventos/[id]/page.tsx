@@ -25,7 +25,26 @@ export default async function EventoPage({ params }: Props) {
     include: {
       registros: {
         orderBy: { criadoEm: "desc" },
-        include: { devolucao: true, criadoPor: { select: { nome: true } } },
+        include: {
+          devolucao: true,
+          criadoPor: { select: { nome: true } },
+          radio: {
+            select: {
+              id: true,
+              numeroPatrimonio: true,
+              marca: true,
+              modelo: true,
+            },
+          },
+          recebedor: {
+            select: {
+              id: true,
+              nome: true,
+              rg: true,
+              departamento: true,
+            },
+          },
+        },
       },
     },
   });
@@ -38,6 +57,26 @@ export default async function EventoPage({ params }: Props) {
   const total = evento.registros.length;
   const emAberto = evento.registros.filter((r) => !r.devolucao).length;
   const devolvidos = total - emAberto;
+
+  // Pra UX: já carrega opções de rádio e recebedor caso o usuário vá registrar
+  // saída. Server-side valida disponibilidade do rádio no submit.
+  const [radios, recebedores] = podeEscrever
+    ? await Promise.all([
+        prisma.radio.findMany({
+          orderBy: { numeroPatrimonio: "asc" },
+          select: {
+            id: true,
+            numeroPatrimonio: true,
+            marca: true,
+            modelo: true,
+          },
+        }),
+        prisma.recebedor.findMany({
+          orderBy: { nome: "asc" },
+          select: { id: true, nome: true, departamento: true },
+        }),
+      ])
+    : [[], []];
 
   return (
     <div className="space-y-8">
@@ -86,7 +125,13 @@ export default async function EventoPage({ params }: Props) {
           <h2 className="font-display text-xl font-extrabold tracking-tight">
             Rádios
           </h2>
-          {podeEscrever && <RegistroDialog eventoId={evento.id} />}
+          {podeEscrever && (
+            <RegistroDialog
+              eventoId={evento.id}
+              radios={radios}
+              recebedores={recebedores}
+            />
+          )}
         </div>
         <RadiosList registros={evento.registros} podeEscrever={podeEscrever} />
       </section>

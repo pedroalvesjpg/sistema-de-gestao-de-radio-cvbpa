@@ -9,7 +9,7 @@ import {
   type TipoFoto,
 } from "@/lib/storage";
 
-const TIPOS: TipoFoto[] = ["rg", "saida", "devolucao"];
+const TIPOS: TipoFoto[] = ["rg", "saida", "devolucao", "perfil"];
 
 export async function uploadFotoAction(formData: FormData) {
   await requireUser();

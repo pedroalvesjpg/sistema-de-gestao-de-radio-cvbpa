@@ -24,60 +24,54 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { FotoUploader } from "@/components/foto/foto-uploader";
-import { registroSchema, type RegistroValues } from "@/lib/schemas/registro";
-import { editarRegistro } from "./actions";
+import { radioSchema, type RadioValues } from "@/lib/schemas/radio";
+import { editarRadio } from "./actions";
 
-type RegistroParaEditar = {
+type Radio = {
   id: number;
-  modeloRadio: string;
-  codigoRadio: string;
-  equipe: string;
-  nomeResponsavel: string;
-  rgResponsavel: string;
-  observacao: string | null;
-  urlFotoRg: string;
-  urlFotoRadioSaida: string;
+  numeroPatrimonio: string;
+  numeroSerie: string;
+  marca: string;
+  modelo: string;
+  acessorios: string | null;
 };
 
 type Props = {
-  registro: RegistroParaEditar;
+  radio: Radio;
   open: boolean;
   onOpenChange: (o: boolean) => void;
 };
 
-export function EditarRegistroDialog({ registro, open, onOpenChange }: Props) {
+export function EditarRadioDialog({ radio, open, onOpenChange }: Props) {
   const [pending, startTransition] = useTransition();
 
-  const defaults: RegistroValues = {
-    modeloRadio: registro.modeloRadio,
-    codigoRadio: registro.codigoRadio,
-    equipe: registro.equipe,
-    nomeResponsavel: registro.nomeResponsavel,
-    rgResponsavel: registro.rgResponsavel,
-    observacao: registro.observacao ?? "",
-    urlFotoRg: registro.urlFotoRg,
-    urlFotoRadioSaida: registro.urlFotoRadioSaida,
+  const defaults: RadioValues = {
+    numeroPatrimonio: radio.numeroPatrimonio,
+    numeroSerie: radio.numeroSerie,
+    marca: radio.marca,
+    modelo: radio.modelo,
+    acessorios: radio.acessorios ?? "",
   };
 
-  const form = useForm<RegistroValues>({
-    resolver: zodResolver(registroSchema),
+  const form = useForm<RadioValues>({
+    resolver: zodResolver(radioSchema),
     defaultValues: defaults,
   });
 
+  // Repopula o form com os dados atuais sempre que reabre.
   useEffect(() => {
     if (open) form.reset(defaults);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, registro.id]);
+  }, [open, radio.id]);
 
-  function onSubmit(values: RegistroValues) {
+  function onSubmit(values: RadioValues) {
     startTransition(async () => {
-      const result = await editarRegistro(registro.id, values);
+      const result = await editarRadio(radio.id, values);
       if ("error" in result) {
         toast.error(result.error);
         return;
       }
-      toast.success("Registro atualizado");
+      toast.success("Rádio atualizado");
       onOpenChange(false);
     });
   }
@@ -86,9 +80,9 @@ export function EditarRegistroDialog({ registro, open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Editar registro</DialogTitle>
+          <DialogTitle>Editar rádio</DialogTitle>
           <DialogDescription>
-            {registro.modeloRadio} · #{registro.codigoRadio}
+            {radio.numeroPatrimonio} · {radio.marca} {radio.modelo}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -99,11 +93,11 @@ export function EditarRegistroDialog({ registro, open, onOpenChange }: Props) {
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
-                name="modeloRadio"
+                name="numeroPatrimonio"
                 control={form.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Modelo do rádio</FormLabel>
+                    <FormLabel>Nº patrimônio</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -112,52 +106,11 @@ export function EditarRegistroDialog({ registro, open, onOpenChange }: Props) {
                 )}
               />
               <FormField
-                name="codigoRadio"
+                name="numeroSerie"
                 control={form.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Código</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              name="equipe"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Equipe</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                name="nomeResponsavel"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do responsável</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="rgResponsavel"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>RG</FormLabel>
+                    <FormLabel>Nº série</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -168,48 +121,38 @@ export function EditarRegistroDialog({ registro, open, onOpenChange }: Props) {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
-                name="urlFotoRg"
+                name="marca"
                 control={form.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FotoUploader
-                      tipo="rg"
-                      label="Foto do RG"
-                      value={field.value}
-                      onChange={(p) =>
-                        form.setValue("urlFotoRg", p, { shouldValidate: true })
-                      }
-                    />
+                    <FormLabel>Marca</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
-                name="urlFotoRadioSaida"
+                name="modelo"
                 control={form.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FotoUploader
-                      tipo="saida"
-                      label="Foto do rádio na entrega"
-                      value={field.value}
-                      onChange={(p) =>
-                        form.setValue("urlFotoRadioSaida", p, {
-                          shouldValidate: true,
-                        })
-                      }
-                    />
+                    <FormLabel>Modelo</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
             <FormField
-              name="observacao"
+              name="acessorios"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Observação (opcional)</FormLabel>
+                  <FormLabel>Acessórios (opcional)</FormLabel>
                   <FormControl>
                     <Textarea rows={2} {...field} />
                   </FormControl>
@@ -225,7 +168,7 @@ export function EditarRegistroDialog({ registro, open, onOpenChange }: Props) {
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={pending}>
+              <Button type="submit" size="lg" disabled={pending}>
                 {pending ? "Salvando…" : "Salvar"}
               </Button>
             </DialogFooter>

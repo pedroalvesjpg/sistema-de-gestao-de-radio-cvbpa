@@ -13,16 +13,23 @@ import { RegistroActionsMenu } from "./registro-actions-menu";
 
 type Registro = {
   id: number;
-  modeloRadio: string;
-  codigoRadio: string;
-  equipe: string;
-  nomeResponsavel: string;
-  rgResponsavel: string;
   observacao: string | null;
   urlFotoRg: string;
   urlFotoRadioSaida: string;
   criadoEm: Date;
   criadoPor: { nome: string };
+  radio: {
+    id: number;
+    numeroPatrimonio: string;
+    marca: string;
+    modelo: string;
+  };
+  recebedor: {
+    id: number;
+    nome: string;
+    rg: string;
+    departamento: string;
+  };
   devolucao: {
     id: number;
     possuiAvaria: boolean;
@@ -61,7 +68,7 @@ export function RadiosList({
         return false;
       if (q) {
         const haystack =
-          `${r.modeloRadio} ${r.codigoRadio} ${r.equipe} ${r.nomeResponsavel} ${r.rgResponsavel}`.toLowerCase();
+          `${r.radio.numeroPatrimonio} ${r.radio.marca} ${r.radio.modelo} ${r.recebedor.nome} ${r.recebedor.rg} ${r.recebedor.departamento}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
@@ -77,7 +84,10 @@ export function RadiosList({
 
   if (total === 0) {
     return (
-      <EmptyState title="Nenhum rádio registrado" desc="A primeira saída aparece aqui." />
+      <EmptyState
+        title="Nenhum rádio registrado"
+        desc="A primeira saída aparece aqui."
+      />
     );
   }
 
@@ -126,14 +136,17 @@ export function RadiosList({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Modelo, código, equipe, responsável…"
+            placeholder="Patrimônio, marca, recebedor, departamento…"
             className="pl-9"
           />
         </div>
       </div>
 
       {filtrados.length === 0 ? (
-        <EmptyState title="Nenhum rádio encontrado" desc="Nada bate com esses filtros." />
+        <EmptyState
+          title="Nenhum rádio encontrado"
+          desc="Nada bate com esses filtros."
+        />
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-md border border-border bg-background">
           {filtrados.map((registro) => (
@@ -159,7 +172,7 @@ function RegistroRow({
   const [fotosOpen, setFotosOpen] = useState(false);
 
   const fotos = [
-    { label: "RG do responsável", path: registro.urlFotoRg },
+    { label: "RG do recebedor", path: registro.urlFotoRg },
     { label: "Rádio na entrega", path: registro.urlFotoRadioSaida },
     ...(registro.devolucao
       ? [
@@ -172,6 +185,8 @@ function RegistroRow({
   ];
 
   const isAberto = !registro.devolucao;
+  const tituloRadio = `${registro.radio.numeroPatrimonio} · ${registro.radio.marca} ${registro.radio.modelo}`;
+  const tituloLinha = `${tituloRadio} · ${registro.recebedor.nome}`;
 
   return (
     <li className="relative p-5 sm:p-6">
@@ -185,25 +200,29 @@ function RegistroRow({
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="font-mono text-base font-bold uppercase tracking-wider">
+              {registro.radio.numeroPatrimonio}
+            </span>
             <span className="font-display text-lg font-bold leading-tight">
-              {registro.modeloRadio}{" "}
               <span className="text-muted-foreground">·</span>{" "}
-              <span className="font-mono">#{registro.codigoRadio}</span>
+              {registro.radio.marca}{" "}
+              <span className="text-muted-foreground">
+                {registro.radio.modelo}
+              </span>
             </span>
             <DevolucaoStatus devolucao={registro.devolucao} />
           </div>
-          <div className="text-sm text-muted-foreground">{registro.equipe}</div>
         </div>
         {podeEscrever && <RegistroActionsMenu registro={registro} />}
       </div>
 
       <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-        <Field label="Responsável">
+        <Field label="Recebedor">
           <span className="font-semibold text-foreground">
-            {registro.nomeResponsavel}
+            {registro.recebedor.nome}
           </span>{" "}
           <span className="text-muted-foreground">
-            (RG {registro.rgResponsavel})
+            (RG {registro.recebedor.rg}) · {registro.recebedor.departamento}
           </span>
         </Field>
         <Field label="Saída registrada">
@@ -256,8 +275,8 @@ function RegistroRow({
         {isAberto && podeEscrever && (
           <DevolucaoForm
             registroId={registro.id}
-            registroLabel={`${registro.modeloRadio} #${registro.codigoRadio} · ${registro.equipe}`}
-            responsavelPadrao={registro.nomeResponsavel}
+            registroLabel={tituloLinha}
+            responsavelPadrao={registro.recebedor.nome}
           />
         )}
       </div>
@@ -265,7 +284,7 @@ function RegistroRow({
       <FotoViewer
         open={fotosOpen}
         onOpenChange={setFotosOpen}
-        titulo={`${registro.modeloRadio} #${registro.codigoRadio} · ${registro.equipe}`}
+        titulo={tituloLinha}
         fotos={fotos}
       />
     </li>
@@ -297,7 +316,11 @@ function DevolucaoStatus({
   devolucao: { possuiAvaria: boolean } | null;
 }) {
   if (!devolucao) {
-    return <DotBadge dot="bg-primary" text="text-primary">Em aberto</DotBadge>;
+    return (
+      <DotBadge dot="bg-primary" text="text-primary">
+        Em aberto
+      </DotBadge>
+    );
   }
   if (devolucao.possuiAvaria) {
     return (
@@ -307,7 +330,9 @@ function DevolucaoStatus({
     );
   }
   return (
-    <DotBadge dot="bg-emerald-600" text="text-emerald-800">Devolvido</DotBadge>
+    <DotBadge dot="bg-emerald-600" text="text-emerald-800">
+      Devolvido
+    </DotBadge>
   );
 }
 

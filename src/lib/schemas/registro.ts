@@ -1,11 +1,14 @@
 import { z } from "zod";
 
 export const registroSchema = z.object({
-  modeloRadio: z.string().min(1, "Modelo obrigatório"),
-  codigoRadio: z.string().min(1, "Código obrigatório"),
-  equipe: z.string().min(1, "Equipe obrigatória"),
-  nomeResponsavel: z.string().min(1, "Nome obrigatório"),
-  rgResponsavel: z.string().min(1, "RG obrigatório"),
+  radioId: z
+    .number({ message: "Selecione um rádio" })
+    .int()
+    .positive("Selecione um rádio"),
+  recebedorId: z
+    .number({ message: "Selecione um recebedor" })
+    .int()
+    .positive("Selecione um recebedor"),
   observacao: z.string().optional(),
   urlFotoRg: z.string().min(1, "Foto do RG obrigatória"),
   urlFotoRadioSaida: z.string().min(1, "Foto do rádio obrigatória"),

@@ -10,9 +10,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { RegistroForm } from "./registro-form";
+import {
+  RegistroForm,
+  type RadioOpcao,
+  type RecebedorOpcao,
+} from "./registro-form";
 
-export function RegistroDialog({ eventoId }: { eventoId: number }) {
+type Props = {
+  eventoId: number;
+  radios: RadioOpcao[];
+  recebedores: RecebedorOpcao[];
+};
+
+export function RegistroDialog({ eventoId, radios, recebedores }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -31,6 +41,8 @@ export function RegistroDialog({ eventoId }: { eventoId: number }) {
         </DialogHeader>
         <RegistroForm
           eventoId={eventoId}
+          radios={radios}
+          recebedores={recebedores}
           onSuccess={() => setOpen(false)}
         />
       </DialogContent>
