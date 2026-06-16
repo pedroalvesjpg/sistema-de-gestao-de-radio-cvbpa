@@ -74,13 +74,7 @@ export default async function PerfilPage() {
   );
 }
 
-function Field({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-5 sm:py-4">
       <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">

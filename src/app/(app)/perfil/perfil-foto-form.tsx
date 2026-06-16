@@ -18,7 +18,7 @@ import { uploadFotoAction } from "@/lib/storage-actions";
 import { iniciais } from "@/lib/format";
 import { atualizarFotoPerfil } from "./actions";
 
-const SAIDA_PX = 512; // exporta sempre 512×512
+const SAIDA_PX = 512;
 
 export function PerfilFotoForm({
   initialUrl,
@@ -92,8 +92,8 @@ export function PerfilFotoForm({
   }
 
   return (
-    <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-      <Avatar className="h-24 w-24" size="lg">
+    <div className="flex items-start gap-4 sm:flex-row sm:items-center">
+      <Avatar className="h-24 w-24" size="default">
         {currentUrl && (
           <AvatarImage src={currentUrl} alt={nome ?? "Foto de perfil"} />
         )}
@@ -208,8 +208,6 @@ export function PerfilFotoForm({
 async function recortar(src: string, area: Area): Promise<Blob> {
   const img = await carregar(src);
 
-  // Usa um canvas intermediário no tamanho do crop original e depois
-  // redimensiona pra SAIDA_PX² — fotos grandes ficam mais leves.
   const canvas = document.createElement("canvas");
   canvas.width = SAIDA_PX;
   canvas.height = SAIDA_PX;
