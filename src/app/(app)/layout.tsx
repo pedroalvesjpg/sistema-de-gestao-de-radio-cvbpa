@@ -90,6 +90,12 @@ export default async function AppLayout({
               >
                 Meu perfil
               </DropdownMenuItem>
+              <DropdownMenuItem
+                render={<Link href="/cracha" />}
+                nativeButton={false}
+              >
+                Crachá funcional
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <form action={logout}>
                 <DropdownMenuItem
