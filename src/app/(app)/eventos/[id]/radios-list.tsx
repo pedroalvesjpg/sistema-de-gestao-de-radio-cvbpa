@@ -5,6 +5,7 @@ import { Images, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FotoViewer } from "@/components/foto/foto-viewer";
+import { DotBadge } from "@/components/eventos/status-badge";
 import { cn } from "@/lib/utils";
 import { fmtDataHora } from "@/lib/format";
 import { DevolucaoForm } from "./devolucao-form";
@@ -296,45 +297,17 @@ function DevolucaoStatus({
   devolucao: { possuiAvaria: boolean } | null;
 }) {
   if (!devolucao) {
-    return (
-      <Pill dot="bg-primary" text="text-primary">
-        Em aberto
-      </Pill>
-    );
+    return <DotBadge dot="bg-primary" text="text-primary">Em aberto</DotBadge>;
   }
   if (devolucao.possuiAvaria) {
     return (
-      <Pill dot="bg-amber-600" text="text-amber-800">
+      <DotBadge dot="bg-amber-600" text="text-amber-800">
         Devolvido c/ avaria
-      </Pill>
+      </DotBadge>
     );
   }
   return (
-    <Pill dot="bg-emerald-600" text="text-emerald-800">
-      Devolvido
-    </Pill>
-  );
-}
-
-function Pill({
-  dot,
-  text,
-  children,
-}: {
-  dot: string;
-  text: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide",
-        text,
-      )}
-    >
-      <span className={cn("h-1.5 w-1.5 rounded-full", dot)} />
-      {children}
-    </span>
+    <DotBadge dot="bg-emerald-600" text="text-emerald-800">Devolvido</DotBadge>
   );
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -47,14 +47,11 @@ export function EditarEventoDialog({ evento, open, onOpenChange }: Props) {
     defaultValues: defaults,
   });
 
-  // Reseta o form sempre que abrir, com os dados atuais do evento.
-  const [lastOpen, setLastOpen] = useState(false);
-  if (open && !lastOpen) {
-    form.reset(defaults);
-    setLastOpen(true);
-  } else if (!open && lastOpen) {
-    setLastOpen(false);
-  }
+  // Repopula o form com os dados atuais sempre que reabre.
+  useEffect(() => {
+    if (open) form.reset(defaults);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, evento.id]);
 
   function onSubmit(values: EventoValues) {
     startTransition(async () => {

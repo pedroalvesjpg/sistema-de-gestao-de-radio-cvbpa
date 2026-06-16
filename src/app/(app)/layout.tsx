@@ -4,8 +4,9 @@ import { requireUser } from "@/lib/auth-guards";
 import { Logo } from "@/components/brand/logo";
 import { MainNav } from "@/components/nav/main-nav";
 import { MobileBottomNav } from "@/components/nav/mobile-bottom-nav";
+import { PapelBadge } from "@/components/eventos/status-badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { iniciais } from "@/lib/format";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,20 +20,14 @@ async function logout() {
   await signOut({ redirectTo: "/login" });
 }
 
-function iniciais(nome?: string | null) {
-  if (!nome) return "?";
-  const parts = nome.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase();
-}
-
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await requireUser();
-  const { user } = session;
+  const { user } = await requireUser();
   const isAdmin = user.role === "ADMIN";
+  const papelLabel = isAdmin ? "Administrador" : "Operador";
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
@@ -62,8 +57,7 @@ export default async function AppLayout({
                   {user.name}
                 </div>
                 <div className="text-[10px] font-bold uppercase tracking-wider leading-tight text-muted-foreground">
-                  {user.cargo ||
-                    (isAdmin ? "Administrador" : "Operador")}
+                  {user.cargo || papelLabel}
                 </div>
               </div>
             </DropdownMenuTrigger>
@@ -73,20 +67,10 @@ export default async function AppLayout({
                 <span className="text-xs text-muted-foreground">
                   {user.email}
                 </span>
-                <span
-                  className={cn(
-                    "mt-1 inline-flex w-fit items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider",
-                    isAdmin ? "text-primary" : "text-muted-foreground",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "h-1.5 w-1.5 rounded-full",
-                      isAdmin ? "bg-primary" : "bg-muted-foreground/50",
-                    )}
-                  />
-                  {isAdmin ? "Administrador" : "Operador"}
-                </span>
+                <PapelBadge
+                  role={user.role}
+                  className="mt-1 text-[10px] tracking-wider"
+                />
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem

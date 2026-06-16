@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guards";
 import { fmtData } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { PapelBadge } from "@/components/eventos/status-badge";
 import { TrocarSenhaForm } from "./trocar-senha-form";
 
 export default async function PerfilPage() {
@@ -24,8 +24,6 @@ export default async function PerfilPage() {
     );
   }
 
-  const isAdmin = user.role === "ADMIN";
-
   return (
     <div className="mx-auto max-w-2xl space-y-10">
       <div className="border-b border-border pb-6">
@@ -47,25 +45,7 @@ export default async function PerfilPage() {
           <Field label="Nome" value={user.nome} />
           <Field label="Email" value={user.email} />
           <Field label="Cargo" value={user.cargo || "—"} />
-          <Field
-            label="Papel"
-            value={
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide",
-                  isAdmin ? "text-primary" : "text-muted-foreground",
-                )}
-              >
-                <span
-                  className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    isAdmin ? "bg-primary" : "bg-muted-foreground/50",
-                  )}
-                />
-                {isAdmin ? "Administrador" : "Operador"}
-              </span>
-            }
-          />
+          <Field label="Papel" value={<PapelBadge role={user.role} />} />
           <Field label="Membro desde" value={fmtData(user.criadoEm)} />
         </div>
       </section>

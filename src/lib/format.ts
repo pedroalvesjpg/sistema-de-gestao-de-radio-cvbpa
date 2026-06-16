@@ -32,3 +32,15 @@ export function statusEvento(evento: { dataInicio: Date; dataFim: Date }, now = 
   return "atual" as const;
 }
 
+/** Primeiro nome (até o primeiro espaço). Vazio cai para a string original. */
+export function primeiroNome(nome: string) {
+  return nome.trim().split(/\s+/)[0] ?? nome;
+}
+
+/** Iniciais (primeira + última palavra) em maiúsculas. "?" quando vazio. */
+export function iniciais(nome?: string | null) {
+  if (!nome) return "?";
+  const parts = nome.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase();
+}
+

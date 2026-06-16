@@ -71,8 +71,6 @@ export function EventosList({
     );
   }
 
-  const totalByFilter: Record<StatusFilter, number> = counts;
-
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-4 border-b border-border pb-3 sm:flex-row sm:items-end sm:justify-between">
@@ -94,7 +92,7 @@ export function EventosList({
                 >
                   {filterLabels[f]}
                   <span className="ml-1.5 font-semibold tabular-nums text-muted-foreground/70">
-                    {totalByFilter[f]}
+                    {counts[f]}
                   </span>
                   {active && (
                     <span className="absolute inset-x-0 -bottom-px h-[2px] bg-primary" />

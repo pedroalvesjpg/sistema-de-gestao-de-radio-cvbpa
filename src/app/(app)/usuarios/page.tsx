@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guards";
 import { fmtData } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { PapelBadge } from "@/components/eventos/status-badge";
 import {
   Table,
   TableBody,
@@ -70,7 +70,6 @@ export default async function UsuariosPage() {
           <TableBody>
             {usuarios.map((u) => {
               const isSelf = u.id === meuId;
-              const isAdmin = u.role === "ADMIN";
               return (
                 <TableRow key={u.id}>
                   <TableCell className="font-semibold">
@@ -88,20 +87,7 @@ export default async function UsuariosPage() {
                     {u.cargo || "—"}
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide",
-                        isAdmin ? "text-primary" : "text-muted-foreground",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "h-1.5 w-1.5 rounded-full",
-                          isAdmin ? "bg-primary" : "bg-muted-foreground/50",
-                        )}
-                      />
-                      {isAdmin ? "Administrador" : "Operador"}
-                    </span>
+                    <PapelBadge role={u.role} />
                   </TableCell>
                   <TableCell className="tabular-nums text-muted-foreground">
                     {fmtData(u.criadoEm)}

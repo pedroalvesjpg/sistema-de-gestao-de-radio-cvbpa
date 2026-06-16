@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { fmtData } from "@/lib/format";
+import { fmtData, primeiroNome } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export async function AdminDashboard({ userName }: { userName: string }) {
   const now = new Date();
-  const primeiroNome = userName.trim().split(/\s+/)[0] ?? userName;
 
   const [eventosAtivos, radiosEmAberto, totalAvarias, pendencias] =
     await Promise.all([
@@ -39,7 +38,7 @@ export async function AdminDashboard({ userName }: { userName: string }) {
     <section className="space-y-8">
       <div className="border-b border-border pb-6">
         <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Olá, {primeiroNome}.
+          Olá, {primeiroNome(userName)}.
         </h1>
       </div>
 

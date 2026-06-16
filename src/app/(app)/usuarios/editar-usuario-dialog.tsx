@@ -31,7 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  CARGO_NENHUM,
   CARGO_OPCOES,
   editarUsuarioSchema,
   type EditarUsuarioValues,
@@ -50,7 +49,7 @@ export function EditarUsuarioDialog({ user, open, onOpenChange }: Props) {
   const defaults: EditarUsuarioValues = {
     nome: user.nome,
     email: user.email,
-    cargo: user.cargo ?? CARGO_NENHUM,
+    cargo: user.cargo ?? "",
   };
 
   const form = useForm<EditarUsuarioValues>({
@@ -68,7 +67,7 @@ export function EditarUsuarioDialog({ user, open, onOpenChange }: Props) {
       const result = await editarUsuario(user.id, {
         nome: values.nome,
         email: values.email,
-        cargo: values.cargo === CARGO_NENHUM ? null : values.cargo,
+        cargo: values.cargo,
       });
       if ("error" in result) {
         toast.error(result.error);
@@ -124,10 +123,13 @@ export function EditarUsuarioDialog({ user, open, onOpenChange }: Props) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Cargo</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value || undefined}
+                    onValueChange={field.onChange}
+                  >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Selecione…" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

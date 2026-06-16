@@ -1,4 +1,3 @@
-import { Logo } from "@/components/brand/logo";
 import { LoginForm } from "./login-form";
 
 type Props = {

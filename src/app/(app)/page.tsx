@@ -7,8 +7,9 @@ import { EventosList } from "./eventos-list";
 import { UserWelcome } from "./user-welcome";
 
 export default async function HomePage() {
-  const session = await requireUser();
-  const isAdmin = session.user.role === "ADMIN";
+  const { user } = await requireUser();
+  const isAdmin = user.role === "ADMIN";
+  const userName = user.name ?? "";
 
   const eventos = await prisma.evento.findMany({
     orderBy: { dataInicio: "desc" },
@@ -21,9 +22,9 @@ export default async function HomePage() {
   return (
     <div className="space-y-8">
       {isAdmin ? (
-        <AdminDashboard userName={session.user.name ?? ""} />
+        <AdminDashboard userName={userName} />
       ) : (
-        <UserWelcome userName={session.user.name ?? ""} />
+        <UserWelcome userName={userName} />
       )}
 
       <div className="space-y-6">

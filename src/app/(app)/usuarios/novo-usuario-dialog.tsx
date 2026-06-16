@@ -31,7 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  CARGO_NENHUM,
   CARGO_OPCOES,
   novoUsuarioSchema,
   type NovoUsuarioValues,
@@ -43,7 +42,7 @@ const defaults: NovoUsuarioValues = {
   email: "",
   senha: "",
   role: "COMUM",
-  cargo: CARGO_NENHUM,
+  cargo: "",
 };
 
 export function NovoUsuarioDialog() {
@@ -62,7 +61,7 @@ export function NovoUsuarioDialog() {
         email: values.email,
         senha: values.senha,
         role: values.role,
-        cargo: values.cargo === CARGO_NENHUM ? null : values.cargo,
+        cargo: values.cargo,
       });
       if ("error" in result) {
         toast.error(result.error);
@@ -100,7 +99,7 @@ export function NovoUsuarioDialog() {
                 <FormItem>
                   <FormLabel>Nome completo</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="Digite o nome completo..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -113,7 +112,12 @@ export function NovoUsuarioDialog() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" autoComplete="off" {...field} />
+                    <Input
+                      placeholder="Digite o email..."
+                      type="email"
+                      autoComplete="off"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -126,7 +130,12 @@ export function NovoUsuarioDialog() {
                 <FormItem>
                   <FormLabel>Senha inicial</FormLabel>
                   <FormControl>
-                    <Input type="password" autoComplete="new-password" {...field} />
+                    <Input
+                      placeholder="Digite a senha inicial..."
+                      type="password"
+                      autoComplete="new-password"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -160,10 +169,13 @@ export function NovoUsuarioDialog() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Cargo</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      value={field.value || undefined}
+                      onValueChange={field.onChange}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Selecione…" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
