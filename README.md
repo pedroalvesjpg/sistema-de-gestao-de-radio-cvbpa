@@ -9,7 +9,6 @@
 [![Cruz Vermelha](https://img.shields.io/badge/Cruz_Vermelha-Brasileira-FF0000?style=flat-square&labelColor=011E41)](https://www.cvb.org.br/)
 [![PWA](https://img.shields.io/badge/PWA-ready-5A0FC8?style=flat-square&logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![Mobile-first](https://img.shields.io/badge/mobile--first-FF0000?style=flat-square)](#)
-[![Status](https://img.shields.io/badge/status-em_desenvolvimento-amber?style=flat-square)](#)
 
 [![Next.js](https://img.shields.io/badge/Next.js_16-000?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
