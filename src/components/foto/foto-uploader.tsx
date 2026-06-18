@@ -29,7 +29,6 @@ export function FotoUploader({
   const [pending, startTransition] = useTransition();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // Limpa o objectURL quando troca de preview (evita leak).
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -70,7 +69,6 @@ export function FotoUploader({
           )}
         >
           {showThumbnail ? (
-            // Preview local antes de sair pro server.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={previewUrl}

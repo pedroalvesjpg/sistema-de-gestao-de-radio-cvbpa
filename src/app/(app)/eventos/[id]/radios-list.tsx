@@ -4,10 +4,11 @@ import { useMemo, useState } from "react";
 import { Images, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FotoViewer } from "@/components/foto/foto-viewer";
 import { DotBadge } from "@/components/eventos/status-badge";
 import { cn } from "@/lib/utils";
-import { fmtDataHora } from "@/lib/format";
+import { fmtDataHora, iniciais } from "@/lib/format";
 import { DevolucaoForm } from "./devolucao-form";
 import { RegistroActionsMenu } from "./registro-actions-menu";
 
@@ -17,7 +18,7 @@ type Registro = {
   urlFotoRg: string;
   urlFotoRadioSaida: string;
   criadoEm: Date;
-  criadoPor: { nome: string };
+  criadoPor: { nome: string; fotoUrl: string | null };
   radio: {
     id: number;
     numeroPatrimonio: string;
@@ -226,10 +227,22 @@ function RegistroRow({
           </span>
         </Field>
         <Field label="Saída registrada">
-          <span className="text-foreground">{registro.criadoPor.nome}</span>
-          <span className="text-muted-foreground">
-            {" "}
-            · {fmtDataHora(registro.criadoEm)}
+          <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+            <Avatar size="sm">
+              {registro.criadoPor.fotoUrl && (
+                <AvatarImage
+                  src={registro.criadoPor.fotoUrl}
+                  alt={registro.criadoPor.nome}
+                />
+              )}
+              <AvatarFallback className="bg-primary text-primary-foreground text-[10px] font-bold">
+                {iniciais(registro.criadoPor.nome)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-foreground">{registro.criadoPor.nome}</span>
+            <span className="text-muted-foreground">
+              · {fmtDataHora(registro.criadoEm)}
+            </span>
           </span>
         </Field>
         {registro.observacao && (

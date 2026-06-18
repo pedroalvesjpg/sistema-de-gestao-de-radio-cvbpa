@@ -13,10 +13,6 @@ const eventoConfig: Record<Status, { label: string; dot: string; text: string }>
   },
 };
 
-/**
- * Pílula institucional: bolinha colorida + texto em uppercase tracking-wide.
- * Base para qualquer badge da identidade CV (status de evento, papel, devolução).
- */
 export function DotBadge({
   dot,
   text,
@@ -57,7 +53,6 @@ export function EventoStatusBadge({
   );
 }
 
-/** Badge de papel (ADMIN vs COMUM) — vermelho institucional vs cinza. */
 export function PapelBadge({
   role,
   className,

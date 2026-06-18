@@ -47,7 +47,6 @@ export function EditarEventoDialog({ evento, open, onOpenChange }: Props) {
     defaultValues: defaults,
   });
 
-  // Repopula o form com os dados atuais sempre que reabre.
   useEffect(() => {
     if (open) form.reset(defaults);
     // eslint-disable-next-line react-hooks/exhaustive-deps

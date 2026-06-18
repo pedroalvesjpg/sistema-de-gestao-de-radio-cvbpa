@@ -2,30 +2,24 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
 export type AcaoAudit =
-  // User
   | "USER_CRIADO"
   | "USER_ATUALIZADO"
   | "USER_ROLE_ALTERADO"
   | "USER_DELETADO"
   | "USER_SENHA_RESETADA"
   | "USER_PROPRIA_SENHA_TROCADA"
-  // Evento
   | "EVENTO_CRIADO"
   | "EVENTO_ATUALIZADO"
   | "EVENTO_DELETADO"
-  // Radio
   | "RADIO_CRIADO"
   | "RADIO_ATUALIZADO"
   | "RADIO_DELETADO"
-  // Recebedor
   | "RECEBEDOR_CRIADO"
   | "RECEBEDOR_ATUALIZADO"
   | "RECEBEDOR_DELETADO"
-  // Registro
   | "REGISTRO_CRIADO"
   | "REGISTRO_EDITADO"
   | "REGISTRO_DESVINCULADO"
-  // Devolucao
   | "DEVOLUCAO_CRIADA"
   | "DEVOLUCAO_CANCELADA";
 
@@ -68,11 +62,7 @@ type RegistrarInput = {
   detalhes?: unknown;
 };
 
-/**
- * Registra uma ação no log de auditoria. Usa a sessão atual pra capturar o ator.
- * Idempotente em falha: NÃO joga exceção pra fora — auditoria nunca quebra a ação
- * principal, mas loga no console pra investigação.
- */
+// Nunca joga exceção: auditoria não pode quebrar a ação principal.
 export async function registrarAcao(input: RegistrarInput) {
   try {
     const session = await auth();
@@ -85,7 +75,6 @@ export async function registrarAcao(input: RegistrarInput) {
         entidade: input.entidade,
         entidadeId: input.entidadeId,
         resumo: input.resumo,
-        // Prisma 7 aceita any serializable como JSON.
         detalhes: input.detalhes
           ? (JSON.parse(JSON.stringify(input.detalhes)) as object)
           : undefined,

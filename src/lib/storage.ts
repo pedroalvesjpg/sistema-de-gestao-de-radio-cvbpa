@@ -9,10 +9,7 @@ export const SIGNED_URL_TTL = 3600; // 1 hora
 
 let cached: SupabaseClient | null = null;
 
-/**
- * Cliente Supabase com service_role — NUNCA usar em código que vá pro cliente.
- * Bypassa RLS por design; é seguro só no servidor.
- */
+// service_role bypassa RLS — nunca importar deste módulo no client.
 function client(): SupabaseClient {
   if (cached) return cached;
   const url = process.env.SUPABASE_URL;
@@ -28,10 +25,6 @@ function client(): SupabaseClient {
   return cached;
 }
 
-/**
- * Sobe a foto pro bucket e retorna o path (não a URL pública —
- * o bucket é privado, URLs são geradas on-demand com expiração).
- */
 export async function uploadFoto(file: File, tipo: TipoFoto): Promise<string> {
   if (!ALLOWED_TYPES.includes(file.type as (typeof ALLOWED_TYPES)[number])) {
     throw new Error("Tipo de arquivo não suportado. Use JPG, PNG ou WebP.");
@@ -56,10 +49,7 @@ export async function uploadFoto(file: File, tipo: TipoFoto): Promise<string> {
   return path;
 }
 
-/**
- * Gera signed URL com expiração curta. Retorna null se o path for placeholder
- * (registros antigos pré-storage) ou se falhar.
- */
+// `placeholder://` marca registros pré-storage; retorna null sem assinar.
 export async function getSignedUrl(
   path: string,
   expiresIn = SIGNED_URL_TTL,
@@ -75,10 +65,7 @@ export async function getSignedUrl(
   return data.signedUrl;
 }
 
-/**
- * Apaga uma foto. Silencioso em placeholders/falhas — auditoria já guarda
- * o path apagado, não vale quebrar a operação principal.
- */
+// Silencioso em falha: auditoria já guarda o path apagado.
 export async function deleteFoto(path: string): Promise<void> {
   if (!path || path.startsWith("placeholder://")) return;
   const { error } = await client().storage.from(BUCKET).remove([path]);

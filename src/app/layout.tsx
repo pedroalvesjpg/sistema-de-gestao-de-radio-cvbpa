@@ -1,13 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Libre_Franklin, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-/*
- * Libre Franklin é recreação open-source do Franklin Gothic — a família
- * tipográfica oficial da Cruz Vermelha Brasileira (Manual de Identidade
- * Institucional, p.16: Franklin Gothic Demi Cond + Franklin Gothic Book).
- */
 const libreFranklin = Libre_Franklin({
   subsets: ["latin"],
   variable: "--font-franklin",
@@ -25,6 +20,22 @@ export const metadata: Metadata = {
   title: "RADCOM | Gestão de Rádios",
   description:
     "Sistema de empréstimo e devolução de rádios em eventos da Cruz Vermelha Brasileira",
+  applicationName: "RADCOM",
+  appleWebApp: {
+    capable: true,
+    title: "RADCOM",
+    statusBarStyle: "default",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#FF0000",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

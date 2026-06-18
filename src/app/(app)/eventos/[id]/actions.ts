@@ -111,7 +111,6 @@ export async function desvincularRegistro(registroId: number) {
     return { error: "Evento já encerrado." } as const;
   }
 
-  // Apaga devolução junto se existir (1:1).
   try {
     await prisma.$transaction([
       prisma.devolucao.deleteMany({ where: { registroId } }),
@@ -127,7 +126,6 @@ export async function desvincularRegistro(registroId: number) {
     throw e;
   }
 
-  // Limpa fotos do storage após o delete do DB.
   deleteFoto(registro.urlFotoRg).catch(() => {});
   deleteFoto(registro.urlFotoRadioSaida).catch(() => {});
   if (registro.devolucao) {

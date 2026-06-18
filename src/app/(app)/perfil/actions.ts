@@ -64,7 +64,6 @@ export async function atualizarFotoPerfil(path: string) {
     data: { fotoPerfilUrl: novo },
   });
 
-  // Limpa foto anterior do storage (fire & forget).
   if (antes.fotoPerfilUrl && antes.fotoPerfilUrl !== novo) {
     deleteFoto(antes.fotoPerfilUrl).catch(() => {});
   }

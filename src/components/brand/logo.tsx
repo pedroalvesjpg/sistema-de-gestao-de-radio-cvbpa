@@ -5,19 +5,9 @@ type Variant = "stacked" | "horizontal" | "mark";
 interface LogoProps {
   variant?: Variant;
   className?: string;
-  /** Esconde texto da label (sr-only fica acessível). Útil em mobile. */
   hideLabel?: boolean;
 }
 
-/**
- * Logo da Cruz Vermelha Brasileira.
- * - "mark": só a cruz (uso em ícones pequenos).
- * - "stacked": cruz acima, "CRUZ VERMELHA / BRASILEIRA" abaixo.
- * - "horizontal": cruz à esquerda, texto à direita.
- *
- * Regra do manual de identidade: em digital, usar apenas a versão vermelha
- * sobre fundo branco.
- */
 export function Logo({ variant = "horizontal", className, hideLabel }: LogoProps) {
   const cross = (
     <svg

@@ -1,6 +1,3 @@
-// Sistema de Controle de Rádios — Cruz Vermelha
-// Prisma 7: provider = "prisma-client" (sem -js); url mora em prisma.config.ts.
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -18,11 +15,11 @@ enum Role {
 model User {
   id            Int      @id @default(autoincrement())
   nome          String
-  cargo         String?  // "Diretor(a)" — exibição
+  cargo         String? // exibição apenas — permissão vem de `role`
   email         String   @unique
   senhaHash     String
   role          Role     @default(COMUM)
-  fotoPerfilUrl String?  // foto de perfil opcional (Supabase Storage)
+  fotoPerfilUrl String?
   criadoEm      DateTime @default(now())
 
   eventosCriados     Evento[]
@@ -33,18 +30,17 @@ model User {
   auditLogs          AuditLog[]
 }
 
-// Log imutável de ações sensíveis. Sobrevive à deleção do ator
-// (FK SetNull + snapshot do nome) — preserva o histórico forense.
+// Imutável; sobrevive à deleção do ator (FK SetNull + snapshot do nome).
 model AuditLog {
   id         Int      @id @default(autoincrement())
   actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
   actorId    Int?
-  actorNome  String   // snapshot pra sobreviver à deleção do user
-  acao       String   // ex: "USER_DELETADO", "DEVOLUCAO_CANCELADA"
-  entidade   String   // "User" | "Evento" | "Registro" | "Devolucao" | "Radio" | "Recebedor"
+  actorNome  String
+  acao       String
+  entidade   String
   entidadeId Int
-  resumo     String   // descrição curta pra UI
-  detalhes   Json?    // payload completo (antes/depois)
+  resumo     String
+  detalhes   Json?
   criadoEm   DateTime @default(now())
 
   @@index([criadoEm])
@@ -63,16 +59,13 @@ model Evento {
   registros   Registro[]
 }
 
-// Cada rádio físico cadastrado no patrimônio da CV.
-// numeroPatrimonio é o identificador do dia-a-dia ("B01"), numeroSerie é
-// o que vem gravado no fabricante.
 model Radio {
   id               Int        @id @default(autoincrement())
-  numeroPatrimonio String     @unique // "B01", "B02"…
-  numeroSerie      String              // série do fabricante (não unique — pode haver erro de digitação histórico)
-  marca            String              // "Baofeng"
-  modelo           String              // "UV-82"
-  acessorios       String?             // texto livre — "Microfone de lapela, antena extra, carregador"
+  numeroPatrimonio String     @unique
+  numeroSerie      String // sem @unique: typos históricos do fabricante são reais
+  marca            String
+  modelo           String
+  acessorios       String? // texto livre
   criadoPor        User       @relation(fields: [criadoPorId], references: [id])
   criadoPorId      Int
   criadoEm         DateTime   @default(now())
@@ -80,14 +73,13 @@ model Radio {
   registros        Registro[]
 }
 
-// Pessoa que recebe um rádio em campo. Cadastro reutilizável entre
-// eventos — diferente do `Registro`, que é o evento de empréstimo em si.
+// Cadastro reutilizável entre eventos. Não confundir com Registro (o empréstimo em si).
 model Recebedor {
   id           Int        @id @default(autoincrement())
   nome         String
-  rg           String              // não unique — RG pode ter typo histórico
-  departamento String              // "Operações", "Coordenação Sul" etc
-  cargo        String              // "Voluntário(a)", "Coordenador(a)"
+  rg           String // sem @unique: typos históricos são reais
+  departamento String
+  cargo        String
   foneContato  String
   criadoPor    User       @relation(fields: [criadoPorId], references: [id])
   criadoPorId  Int
@@ -98,9 +90,7 @@ model Recebedor {
   @@index([nome])
 }
 
-// Empréstimo (check-out): vincula um rádio do patrimônio a um
-// recebedor cadastrado, num evento. As fotos do RG e do rádio na
-// entrega ficam aqui, como prova do ato.
+// Check-out de rádio. Fotos (RG + rádio) são prova do ato no momento da entrega.
 model Registro {
   id                Int        @id @default(autoincrement())
   evento            Evento     @relation(fields: [eventoId], references: [id])
@@ -109,23 +99,23 @@ model Registro {
   radioId           Int
   recebedor         Recebedor  @relation(fields: [recebedorId], references: [id])
   recebedorId       Int
-  urlFotoRg         String     // foto do RG físico no momento da entrega
-  urlFotoRadioSaida String     // foto do rádio na entrega
+  urlFotoRg         String
+  urlFotoRadioSaida String
   observacao        String?
   criadoPor         User       @relation(fields: [criadoPorId], references: [id])
   criadoPorId       Int
   criadoEm          DateTime   @default(now())
-  devolucao         Devolucao? // relação 1:1
+  devolucao         Devolucao?
 }
 
 model Devolucao {
   id                    Int      @id @default(autoincrement())
   registro              Registro @relation(fields: [registroId], references: [id])
-  registroId            Int      @unique // garante o 1:1
+  registroId            Int      @unique
   urlFotoRadioDevolucao String
   possuiAvaria          Boolean  @default(false)
   observacao            String?
-  devolvidoPor          String?  // null = mesmo recebedor do registro
+  devolvidoPor          String? // null = mesmo recebedor do Registro
   criadoPor             User     @relation(fields: [criadoPorId], references: [id])
   criadoPorId           Int
   criadoEm              DateTime @default(now())

@@ -43,10 +43,6 @@ export async function uploadFotoAction(formData: FormData) {
   }
 }
 
-/**
- * Gera signed URLs pra um conjunto de paths. Usado pelo viewer de fotos
- * quando o usuário clica em "Ver fotos" num registro.
- */
 export async function gerarSignedUrls(paths: string[]) {
   await requireUser();
   const urls = await Promise.all(paths.map((p) => getSignedUrl(p)));

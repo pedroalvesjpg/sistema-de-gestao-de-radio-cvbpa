@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guards";
 import { fmtData, statusEvento } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { getSignedUrl } from "@/lib/storage";
 import { EventoStatusBadge } from "@/components/eventos/status-badge";
 import { RegistroDialog } from "./registro-dialog";
 import { RadiosList } from "./radios-list";
@@ -27,7 +28,7 @@ export default async function EventoPage({ params }: Props) {
         orderBy: { criadoEm: "desc" },
         include: {
           devolucao: true,
-          criadoPor: { select: { nome: true } },
+          criadoPor: { select: { nome: true, fotoPerfilUrl: true } },
           radio: {
             select: {
               id: true,
@@ -58,8 +59,30 @@ export default async function EventoPage({ params }: Props) {
   const emAberto = evento.registros.filter((r) => !r.devolucao).length;
   const devolvidos = total - emAberto;
 
-  // Pra UX: já carrega opções de rádio e recebedor caso o usuário vá registrar
-  // saída. Server-side valida disponibilidade do rádio no submit.
+  const fotoPaths = Array.from(
+    new Set(
+      evento.registros
+        .map((r) => r.criadoPor.fotoPerfilUrl)
+        .filter((p): p is string => !!p),
+    ),
+  );
+  const fotoUrlByPath = new Map(
+    await Promise.all(
+      fotoPaths.map(
+        async (p) => [p, await getSignedUrl(p)] as const,
+      ),
+    ),
+  );
+  const registrosComFoto = evento.registros.map((r) => ({
+    ...r,
+    criadoPor: {
+      nome: r.criadoPor.nome,
+      fotoUrl: r.criadoPor.fotoPerfilUrl
+        ? (fotoUrlByPath.get(r.criadoPor.fotoPerfilUrl) ?? null)
+        : null,
+    },
+  }));
+
   const [radios, recebedores] = podeEscrever
     ? await Promise.all([
         prisma.radio.findMany({
@@ -133,7 +156,7 @@ export default async function EventoPage({ params }: Props) {
             />
           )}
         </div>
-        <RadiosList registros={evento.registros} podeEscrever={podeEscrever} />
+        <RadiosList registros={registrosComFoto} podeEscrever={podeEscrever} />
       </section>
     </div>
   );
