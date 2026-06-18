@@ -32,8 +32,8 @@
 ## Sobre
 
 **RADCOM** é o sistema interno de radiocomunicações da Cruz Vermelha
-Brasileira para controlar o empréstimo (saída) e a devolução de rádios
-alugados durante eventos: Círio, arraiais, mutirões, operações de campo.
+Brasileira Paraense para controlar o empréstimo (saída) e a devolução de rádios
+alugados ou do acervo patrimonial da CVBPA durante eventos: Círio, arraiais, mutirões, operações de campo.
 
 É um fluxo de _check-out_ / _check-in_ de equipamento, com prova fotográfica
 (RG do recebedor + rádio na entrega) e rastreabilidade de quem ficou
@@ -103,8 +103,6 @@ User (criadoPor — auditoria do operador logado)
   guarda as provas do ato (`urlFotoRg`, `urlFotoRadioSaida`).
 - **Devolução é tabela separada com 1:1**. "Está devolvido?" = a `Devolucao`
   existe. Não há campo de status no `Registro`.
-- **Papel ≠ cargo**. `role` (`COMUM` | `ADMIN`) controla permissão; `cargo`
-  é só exibição ("Diretor(a)", "Voluntário(a)").
 
 ## Identidade visual
 
@@ -129,5 +127,5 @@ política de retenção deve ser definida com a coordenação.
 ---
 
 <div align="center">
-  <sub>Feito para a equipe de radiocomunicação da <strong>Cruz Vermelha Brasileira</strong>.</sub>
+  <sub>Feito para a equipe de radiocomunicação da <strong>Cruz Vermelha Brasileira Paraense</strong>.</sub>
 </div>
