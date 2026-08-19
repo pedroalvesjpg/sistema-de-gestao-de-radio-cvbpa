@@ -54,7 +54,13 @@ export default async function EventoPage({ params }: Props) {
   const status = statusEvento(evento);
   if (!isAdmin && status === "passado") redirect("/");
 
-  const podeEscrever = status !== "passado";
+  const encerrado = status === "passado";
+  // Saída nova só em evento aberto — `criarRegistro` recusa em qualquer caso.
+  const podeRegistrarSaida = !encerrado;
+  // Fechar pendência (devolver, desvincular, cancelar) continua liberado para a
+  // coordenação depois do evento: é assim que um rádio que voltou tarde baixa.
+  const podeGerenciarRegistros = !encerrado || isAdmin;
+
   const total = evento.registros.length;
   const emAberto = evento.registros.filter((r) => !r.devolucao).length;
   const devolvidos = total - emAberto;
@@ -83,7 +89,7 @@ export default async function EventoPage({ params }: Props) {
     },
   }));
 
-  const [radios, recebedores] = podeEscrever
+  const [radios, recebedores] = podeRegistrarSaida
     ? await Promise.all([
         prisma.radio.findMany({
           orderBy: { numeroPatrimonio: "asc" },
@@ -148,7 +154,7 @@ export default async function EventoPage({ params }: Props) {
           <h2 className="font-display text-xl font-extrabold tracking-tight">
             Rádios
           </h2>
-          {podeEscrever && (
+          {podeRegistrarSaida && (
             <RegistroDialog
               eventoId={evento.id}
               radios={radios}
@@ -156,8 +162,29 @@ export default async function EventoPage({ params }: Props) {
             />
           )}
         </div>
-        <RadiosList registros={registrosComFoto} podeEscrever={podeEscrever} />
+
+        {encerrado && isAdmin && emAberto > 0 && <AvisoBaixaTardia />}
+
+        <RadiosList
+          registros={registrosComFoto}
+          podeEscrever={podeGerenciarRegistros}
+        />
       </section>
+    </div>
+  );
+}
+
+function AvisoBaixaTardia() {
+  return (
+    <div className="rounded-md border border-amber-300/70 bg-amber-50/60 px-4 py-3">
+      <div className="text-xs font-bold uppercase tracking-wide text-amber-900">
+        Baixa tardia
+      </div>
+      <p className="mt-1 text-sm text-amber-900/80">
+        O evento já encerrou, mas ainda há rádio em aberto. Como administrador
+        você pode lançar a devolução agora — a auditoria vai marcar que foi
+        lançamento tardio, com a data real do registro.
+      </p>
     </div>
   );
 }

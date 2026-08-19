@@ -34,7 +34,13 @@ type Recebedor = {
   foneContato: string;
 };
 
-export function RecebedorActionsMenu({ recebedor }: { recebedor: Recebedor }) {
+export function RecebedorActionsMenu({
+  recebedor,
+  isAdmin,
+}: {
+  recebedor: Recebedor;
+  isAdmin: boolean;
+}) {
   const [editOpen, setEditOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -51,6 +57,8 @@ export function RecebedorActionsMenu({ recebedor }: { recebedor: Recebedor }) {
       setConfirmOpen(false);
     });
   }
+
+  if (!isAdmin) return null;
 
   return (
     <>

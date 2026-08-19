@@ -13,7 +13,8 @@ import { NovoRecebedorDialog } from "./novo-recebedor-dialog";
 import { RecebedorActionsMenu } from "./recebedor-actions-menu";
 
 export default async function RecebedoresPage() {
-  await requireUser();
+  const session = await requireUser();
+  const isAdmin = session.user.role === "ADMIN";
 
   const recebedores = await prisma.recebedor.findMany({
     orderBy: { nome: "asc" },
@@ -75,9 +76,11 @@ export default async function RecebedoresPage() {
                   <TableHead className="text-xs font-bold uppercase tracking-wide">
                     Cadastrado em
                   </TableHead>
-                  <TableHead className="w-12 text-right">
-                    <span className="sr-only">Ações</span>
-                  </TableHead>
+                  {isAdmin && (
+                    <TableHead className="w-12 text-right">
+                      <span className="sr-only">Ações</span>
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -99,9 +102,11 @@ export default async function RecebedoresPage() {
                     <TableCell className="tabular-nums text-muted-foreground">
                       {fmtData(r.criadoEm)}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <RecebedorActionsMenu recebedor={r} />
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-right">
+                        <RecebedorActionsMenu recebedor={r} isAdmin={isAdmin} />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

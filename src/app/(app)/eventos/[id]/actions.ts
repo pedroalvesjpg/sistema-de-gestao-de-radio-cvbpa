@@ -171,6 +171,7 @@ export async function criarDevolucao(
   input: CriarDevolucaoInput,
 ) {
   const session = await requireUser();
+  const isAdmin = session.user.role === "ADMIN";
 
   const registro = await prisma.registro.findUnique({
     where: { id: registroId },
@@ -184,8 +185,16 @@ export async function criarDevolucao(
   if (registro.devolucao) {
     return { error: "Esse rádio já foi devolvido." } as const;
   }
-  if (registro.evento.dataFim < new Date()) {
-    return { error: "Evento já encerrado." } as const;
+
+  // Rádio que só volta depois do evento é rotina, não exceção. Operador não
+  // fecha evento encerrado, mas a coordenação precisa poder — senão o registro
+  // fica em aberto para sempre e não há como zerar a pendência.
+  const eventoEncerrado = registro.evento.dataFim < new Date();
+  if (eventoEncerrado && !isAdmin) {
+    return {
+      error:
+        "Evento já encerrado — peça a um administrador para lançar a devolução.",
+    } as const;
   }
 
   const observacao = input.observacao?.trim() || null;
@@ -212,7 +221,7 @@ export async function criarDevolucao(
     acao: "DEVOLUCAO_CRIADA",
     entidade: "Devolucao",
     entidadeId: devolucao.id,
-    resumo: `Marcou devolução de ${registro.radio.numeroPatrimonio}${input.possuiAvaria ? " (COM AVARIA)" : ""}`,
+    resumo: `Marcou devolução de ${registro.radio.numeroPatrimonio}${input.possuiAvaria ? " (COM AVARIA)" : ""}${eventoEncerrado ? " — lançamento tardio, evento já encerrado" : ""}`,
     detalhes: {
       registroId,
       eventoId: registro.eventoId,
@@ -220,6 +229,8 @@ export async function criarDevolucao(
       devolvidoPor,
       observacao,
       urlFotoRadioDevolucao,
+      eventoEncerrado,
+      eventoDataFim: registro.evento.dataFim,
     },
   });
 

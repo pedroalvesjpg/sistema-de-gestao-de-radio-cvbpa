@@ -13,7 +13,8 @@ import { NovoRadioDialog } from "./novo-radio-dialog";
 import { RadioActionsMenu } from "./radio-actions-menu";
 
 export default async function RadiosPage() {
-  await requireUser();
+  const session = await requireUser();
+  const isAdmin = session.user.role === "ADMIN";
 
   const radios = await prisma.radio.findMany({
     orderBy: { numeroPatrimonio: "asc" },
@@ -72,9 +73,11 @@ export default async function RadiosPage() {
                   <TableHead className="text-xs font-bold uppercase tracking-wide">
                     Cadastrado em
                   </TableHead>
-                  <TableHead className="w-12 text-right">
-                    <span className="sr-only">Ações</span>
-                  </TableHead>
+                  {isAdmin && (
+                    <TableHead className="w-12 text-right">
+                      <span className="sr-only">Ações</span>
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,9 +99,11 @@ export default async function RadiosPage() {
                     <TableCell className="tabular-nums text-muted-foreground">
                       {fmtData(r.criadoEm)}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <RadioActionsMenu radio={r} />
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-right">
+                        <RadioActionsMenu radio={r} isAdmin={isAdmin} />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

@@ -21,5 +21,7 @@ declare module "next-auth/jwt" {
     id?: string;
     role?: Role;
     cargo?: string | null;
+    /** Epoch ms da última conferência do usuário no banco. */
+    revalidadoEm?: number;
   }
 }

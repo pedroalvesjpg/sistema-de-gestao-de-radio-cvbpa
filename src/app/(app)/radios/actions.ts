@@ -3,9 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth-guards";
+import { requireAdmin, requireUser } from "@/lib/auth-guards";
 import { registrarAcao } from "@/lib/audit";
 import type { RadioValues } from "@/lib/schemas/radio";
+
+// Permissão assimétrica de propósito: cadastrar é `requireUser` porque em
+// evento a equipe precisa incluir rádio na hora, sem depender da coordenação.
+// Editar e excluir são `requireAdmin` — mexem em cadastro já vinculado a
+// registro histórico, e patrimônio reescrito quebra a rastreabilidade.
 
 function sanitize(input: RadioValues) {
   return {
@@ -58,7 +63,7 @@ export async function criarRadio(input: RadioValues) {
 }
 
 export async function editarRadio(radioId: number, input: RadioValues) {
-  await requireUser();
+  await requireAdmin();
   const data = sanitize(input);
 
   if (!data.numeroPatrimonio) return { error: "Número do patrimônio obrigatório." } as const;
@@ -105,7 +110,7 @@ export async function editarRadio(radioId: number, input: RadioValues) {
 }
 
 export async function deletarRadio(radioId: number) {
-  await requireUser();
+  await requireAdmin();
 
   const radio = await prisma.radio.findUnique({
     where: { id: radioId },

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { uploadFotoAction } from "@/lib/storage-actions";
+import { reduzirImagem } from "@/lib/imagem";
 import type { TipoFoto } from "@/lib/storage";
 
 type Props = {
@@ -42,8 +43,11 @@ export function FotoUploader({
     setPreviewUrl(localUrl);
 
     startTransition(async () => {
+      // Reduz antes de subir: foto crua de celular estoura o limite de 5 MB.
+      const enviavel = await reduzirImagem(file);
+
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", enviavel);
       fd.append("tipo", tipo);
       const result = await uploadFotoAction(fd);
       if ("error" in result) {
@@ -119,7 +123,7 @@ export function FotoUploader({
               ? "Sem foto cadastrada. Adicione agora."
               : hasFotoServer
                 ? "Foto carregada. Clique em trocar pra substituir."
-                : "JPG, PNG ou WebP, até 5 MB."}
+                : "JPG, PNG ou WebP. Fotos grandes são reduzidas automaticamente."}
           </p>
         </div>
       </div>

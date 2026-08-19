@@ -34,7 +34,13 @@ type Radio = {
   acessorios: string | null;
 };
 
-export function RadioActionsMenu({ radio }: { radio: Radio }) {
+export function RadioActionsMenu({
+  radio,
+  isAdmin,
+}: {
+  radio: Radio;
+  isAdmin: boolean;
+}) {
   const [editOpen, setEditOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -51,6 +57,8 @@ export function RadioActionsMenu({ radio }: { radio: Radio }) {
       setConfirmOpen(false);
     });
   }
+
+  if (!isAdmin) return null;
 
   return (
     <>

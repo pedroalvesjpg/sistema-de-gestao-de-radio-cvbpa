@@ -3,9 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth-guards";
+import { requireAdmin, requireUser } from "@/lib/auth-guards";
 import { registrarAcao } from "@/lib/audit";
 import type { RecebedorValues } from "@/lib/schemas/recebedor";
+
+// Permissão assimétrica de propósito: cadastrar é `requireUser` porque em
+// evento a equipe precisa incluir recebedor na hora, sem depender da
+// coordenação. Editar e excluir são `requireAdmin` — mexem em cadastro já
+// vinculado a registro histórico, e RG reescrito quebra a rastreabilidade.
 
 function sanitize(input: RecebedorValues) {
   return {
@@ -54,7 +59,7 @@ export async function editarRecebedor(
   recebedorId: number,
   input: RecebedorValues,
 ) {
-  await requireUser();
+  await requireAdmin();
   const data = sanitize(input);
 
   const erro = validar(data);
@@ -87,7 +92,7 @@ export async function editarRecebedor(
 }
 
 export async function deletarRecebedor(recebedorId: number) {
-  await requireUser();
+  await requireAdmin();
 
   const recebedor = await prisma.recebedor.findUnique({
     where: { id: recebedorId },
