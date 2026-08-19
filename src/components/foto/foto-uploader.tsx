@@ -5,7 +5,7 @@ import { Check, ImageUp, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { uploadFotoAction } from "@/lib/storage-actions";
+import { descartarFotoAction, uploadFotoAction } from "@/lib/storage-actions";
 import { reduzirImagem } from "@/lib/imagem";
 import type { TipoFoto } from "@/lib/storage";
 
@@ -29,6 +29,9 @@ export function FotoUploader({
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Última foto que ESTE componente subiu. Só ela pode ser descartada numa
+  // troca — o `value` inicial pode ser uma foto já salva, que não é nossa.
+  const enviadaRef = useRef<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -55,7 +58,15 @@ export function FotoUploader({
         setPreviewUrl(null);
         return;
       }
+
+      // Refazer foto ruim é rotina em campo; sem isso cada tentativa deixa
+      // um arquivo permanente no bucket.
+      const substituida = enviadaRef.current;
+      enviadaRef.current = result.path;
       onChange(result.path);
+      if (substituida && substituida !== result.path) {
+        descartarFotoAction(substituida).catch(() => {});
+      }
     });
   }
 

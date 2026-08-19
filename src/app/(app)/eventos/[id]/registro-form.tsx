@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -35,9 +36,14 @@ export type RecebedorOpcao = {
 
 type Props = {
   eventoId: number;
+  /** Apenas os rádios livres — os que estão em campo não entram na lista. */
   radios: RadioOpcao[];
   recebedores: RecebedorOpcao[];
+  /** Quantos ficaram de fora por estarem em campo, para explicar a lista. */
+  radiosEmCampo: number;
   onSuccess?: () => void;
+  /** Avisa o dialog de cada foto subida, pra ele descartar se não salvar. */
+  onFotoEnviada?: (path: string) => void;
 };
 
 const defaults: RegistroValues = {
@@ -52,7 +58,9 @@ export function RegistroForm({
   eventoId,
   radios,
   recebedores,
+  radiosEmCampo,
   onSuccess,
+  onFotoEnviada,
 }: Props) {
   const [pending, startTransition] = useTransition();
 
@@ -77,12 +85,18 @@ export function RegistroForm({
   if (radios.length === 0 || recebedores.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
-        {radios.length === 0 && (
-          <p>
-            Nenhum rádio cadastrado. Cadastre em <strong>Rádios</strong> antes
-            de registrar uma saída.
-          </p>
-        )}
+        {radios.length === 0 &&
+          (radiosEmCampo > 0 ? (
+            <p>
+              Todos os {radiosEmCampo} rádios do patrimônio estão em campo.
+              Marque uma devolução para liberar algum.
+            </p>
+          ) : (
+            <p>
+              Nenhum rádio cadastrado. Cadastre em <strong>Rádios</strong> antes
+              de registrar uma saída.
+            </p>
+          ))}
         {recebedores.length === 0 && (
           <p>
             Nenhum recebedor cadastrado. Cadastre em{" "}
@@ -127,8 +141,16 @@ export function RegistroForm({
                   )}
                   placeholder="Selecione um rádio…"
                   searchPlaceholder="Buscar por patrimônio, marca, modelo…"
+                  emptyLabel="Nenhum rádio livre com esse termo."
                 />
               </FormControl>
+              {radiosEmCampo > 0 && (
+                <FormDescription>
+                  {radiosEmCampo === 1
+                    ? "1 rádio não aparece aqui por estar em campo."
+                    : `${radiosEmCampo} rádios não aparecem aqui por estarem em campo.`}
+                </FormDescription>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -172,9 +194,10 @@ export function RegistroForm({
                   tipo="rg"
                   label="Foto do RG"
                   value={field.value}
-                  onChange={(p) =>
-                    form.setValue("urlFotoRg", p, { shouldValidate: true })
-                  }
+                  onChange={(p) => {
+                    form.setValue("urlFotoRg", p, { shouldValidate: true });
+                    onFotoEnviada?.(p);
+                  }}
                 />
                 <FormMessage />
               </FormItem>
@@ -189,11 +212,12 @@ export function RegistroForm({
                   tipo="saida"
                   label="Foto do rádio na entrega"
                   value={field.value}
-                  onChange={(p) =>
+                  onChange={(p) => {
                     form.setValue("urlFotoRadioSaida", p, {
                       shouldValidate: true,
-                    })
-                  }
+                    });
+                    onFotoEnviada?.(p);
+                  }}
                 />
                 <FormMessage />
               </FormItem>

@@ -15,6 +15,14 @@ type CriarRegistroInput = {
   urlFotoRadioSaida: string;
 };
 
+/** Aborta a transação de criação quando o rádio já está em campo. */
+class RadioEmCampo extends Error {
+  constructor(readonly eventoNome: string) {
+    super(`rádio em campo no evento "${eventoNome}"`);
+    this.name = "RadioEmCampo";
+  }
+}
+
 export async function criarRegistro(
   eventoId: number,
   input: CriarRegistroInput,
@@ -50,34 +58,50 @@ export async function criarRegistro(
   if (!radio) return { error: "Rádio não encontrado." } as const;
   if (!recebedor) return { error: "Recebedor não encontrado." } as const;
 
-  // Rádio só pode estar em um registro sem devolução por vez.
-  const emUso = await prisma.registro.findFirst({
-    where: { radioId: radio.id, devolucao: { is: null } },
-    select: { evento: { select: { nome: true } } },
-  });
-  if (emUso) {
-    return {
-      error: `Esse rádio ainda está em campo no evento "${emUso.evento.nome}".`,
-    } as const;
-  }
+  // Um rádio só pode estar em um registro sem devolução por vez. A checagem e
+  // o insert têm que ser atômicos: sem isso, dois operadores registrando o
+  // mesmo rádio ao mesmo tempo passam os dois pela checagem e criam dois
+  // registros em aberto — o rádio passa a "existir" em dois lugares e os
+  // contadores de campo mentem. O `FOR UPDATE` serializa as tentativas
+  // concorrentes para aquele rádio; as demais esperam e então veem o registro.
+  let registroId: number;
+  try {
+    registroId = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Radio" WHERE id = ${radio.id} FOR UPDATE`;
 
-  const registro = await prisma.registro.create({
-    data: {
-      eventoId,
-      radioId: radio.id,
-      recebedorId: recebedor.id,
-      urlFotoRg,
-      urlFotoRadioSaida,
-      observacao,
-      criadoPorId: Number(session.user.id),
-    },
-    select: { id: true },
-  });
+      const emUso = await tx.registro.findFirst({
+        where: { radioId: radio.id, devolucao: { is: null } },
+        select: { evento: { select: { nome: true } } },
+      });
+      if (emUso) throw new RadioEmCampo(emUso.evento.nome);
+
+      const criado = await tx.registro.create({
+        data: {
+          eventoId,
+          radioId: radio.id,
+          recebedorId: recebedor.id,
+          urlFotoRg,
+          urlFotoRadioSaida,
+          observacao,
+          criadoPorId: Number(session.user.id),
+        },
+        select: { id: true },
+      });
+      return criado.id;
+    });
+  } catch (e) {
+    if (e instanceof RadioEmCampo) {
+      return {
+        error: `Esse rádio ainda está em campo no evento "${e.eventoNome}".`,
+      } as const;
+    }
+    throw e;
+  }
 
   await registrarAcao({
     acao: "REGISTRO_CRIADO",
     entidade: "Registro",
-    entidadeId: registro.id,
+    entidadeId: registroId,
     resumo: `Registrou saída de ${radio.numeroPatrimonio} (${radio.marca} ${radio.modelo}) para ${recebedor.nome} (${recebedor.departamento}) no evento "${evento.nome}"`,
     detalhes: {
       eventoId,

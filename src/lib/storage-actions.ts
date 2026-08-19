@@ -1,9 +1,11 @@
 "use server";
 
+import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guards";
 import {
   ALLOWED_TYPES,
   MAX_BYTES,
+  deleteFoto,
   getSignedUrl,
   uploadFoto,
   type TipoFoto,
@@ -41,6 +43,39 @@ export async function uploadFotoAction(formData: FormData) {
       error: e instanceof Error ? e.message : "Falha no upload.",
     } as const;
   }
+}
+
+/**
+ * Apaga uma foto que subiu mas nunca chegou a ser salva — formulário
+ * abandonado ou foto trocada antes do envio. Sem isso, cada tentativa deixa
+ * lixo permanente no bucket, e como são fotos de RG isso é problema de LGPD,
+ * não só de espaço.
+ *
+ * Nunca apaga o que está referenciado no banco: foto de um registro salvo é
+ * prova do ato de entrega e não pode sumir por um descarte de formulário.
+ */
+export async function descartarFotoAction(path: string) {
+  await requireUser();
+
+  const alvo = path.trim();
+  if (!alvo || alvo.startsWith("placeholder://")) {
+    return { ok: true } as const;
+  }
+
+  const [emRegistro, emDevolucao, emPerfil] = await Promise.all([
+    prisma.registro.count({
+      where: { OR: [{ urlFotoRg: alvo }, { urlFotoRadioSaida: alvo }] },
+    }),
+    prisma.devolucao.count({ where: { urlFotoRadioDevolucao: alvo } }),
+    prisma.user.count({ where: { fotoPerfilUrl: alvo } }),
+  ]);
+
+  if (emRegistro + emDevolucao + emPerfil > 0) {
+    return { ok: false, motivo: "foto em uso" } as const;
+  }
+
+  await deleteFoto(alvo);
+  return { ok: true } as const;
 }
 
 export async function gerarSignedUrls(paths: string[]) {

@@ -30,6 +30,7 @@ import {
 import { FotoUploader } from "@/components/foto/foto-uploader";
 import { cn } from "@/lib/utils";
 import { devolucaoSchema, type DevolucaoValues } from "@/lib/schemas/registro";
+import { descartarFotoAction } from "@/lib/storage-actions";
 import { criarDevolucao } from "./actions";
 
 const defaults: DevolucaoValues = {
@@ -74,17 +75,27 @@ export function DevolucaoForm({
         return;
       }
       toast.success("Devolução registrada");
-      setOpen(false);
+      // Reseta antes de fechar: a foto virou devolução e não deve ser
+      // descartada por `fecharSemSalvar`.
       form.reset(defaults);
+      setOpen(false);
     });
+  }
+
+  function fecharSemSalvar() {
+    // Foto que subiu mas não chegou a virar devolução vira lixo no bucket.
+    const pendente = form.getValues("urlFotoRadioDevolucao");
+    if (pendente) descartarFotoAction(pendente).catch(() => {});
+    form.reset(defaults);
+    setOpen(false);
   }
 
   return (
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        setOpen(o);
-        if (!o) form.reset(defaults);
+        if (o) setOpen(true);
+        else fecharSemSalvar();
       }}
     >
       <DialogTrigger render={<Button>Marcar devolução</Button>} />
@@ -192,7 +203,7 @@ export function DevolucaoForm({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={fecharSemSalvar}
               >
                 Cancelar
               </Button>

@@ -89,9 +89,13 @@ export default async function EventoPage({ params }: Props) {
     },
   }));
 
-  const [radios, recebedores] = podeRegistrarSaida
+  const [radios, totalRadios, recebedores] = podeRegistrarSaida
     ? await Promise.all([
         prisma.radio.findMany({
+          // Só os livres. Oferecer um rádio que está em campo só levava o
+          // operador a preencher o formulário inteiro — duas fotos — para
+          // receber a recusa no envio e perder tudo.
+          where: { registros: { none: { devolucao: { is: null } } } },
           orderBy: { numeroPatrimonio: "asc" },
           select: {
             id: true,
@@ -100,12 +104,15 @@ export default async function EventoPage({ params }: Props) {
             modelo: true,
           },
         }),
+        prisma.radio.count(),
         prisma.recebedor.findMany({
           orderBy: { nome: "asc" },
           select: { id: true, nome: true, departamento: true },
         }),
       ])
-    : [[], []];
+    : [[], 0, []];
+
+  const radiosEmCampo = totalRadios - radios.length;
 
   return (
     <div className="space-y-8">
@@ -159,6 +166,7 @@ export default async function EventoPage({ params }: Props) {
               eventoId={evento.id}
               radios={radios}
               recebedores={recebedores}
+              radiosEmCampo={radiosEmCampo}
             />
           )}
         </div>

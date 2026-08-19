@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { uploadFotoAction } from "@/lib/storage-actions";
+import { descartarFotoAction, uploadFotoAction } from "@/lib/storage-actions";
 import { iniciais } from "@/lib/format";
 import { atualizarFotoPerfil } from "./actions";
 
@@ -76,6 +76,8 @@ export function PerfilFotoForm({
 
         const result = await atualizarFotoPerfil(upload.path);
         if ("error" in result) {
+          // Subiu mas não virou perfil: descarta pra não deixar órfã.
+          descartarFotoAction(upload.path).catch(() => {});
           toast.error(result.error);
           return;
         }
