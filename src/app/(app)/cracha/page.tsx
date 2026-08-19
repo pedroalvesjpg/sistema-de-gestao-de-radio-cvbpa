@@ -43,7 +43,21 @@ export default async function CrachaPage() {
 
       <div className="flex flex-col md:flex-row gap-6">
         <div className="flex justify-center">
-          <div className="flex w-[20rem] flex-col overflow-hidden rounded-md border border-border bg-white shadow-md">
+          <div
+            // O crachá é um cartão impresso: branco nos dois temas. Como os
+            // filhos usam tokens (text-foreground, border-border...), no escuro
+            // saíam claros sobre branco. Redeclarar os tokens claros aqui faz
+            // todo o conteúdo herdar o tema certo, sem tocar em cada elemento.
+            style={
+              {
+                "--foreground": "#1f2324",
+                "--muted-foreground": "#5b6166",
+                "--muted": "#f4f4f6",
+                "--border": "#e6e6e8",
+              } as React.CSSProperties
+            }
+            className="flex w-[20rem] flex-col overflow-hidden rounded-md border border-border bg-white text-foreground shadow-md dark:bg-[#f2efec] dark:shadow-xl dark:shadow-black/40"
+          >
             <div className="flex items-center justify-center gap-3 px-4 pb-3 pt-5">
               <Logo variant="mark" className="h-12 w-12 shrink-0" />
               <div className="font-display text-lg font-black uppercase leading-[0.95] tracking-tight text-foreground">
@@ -54,7 +68,13 @@ export default async function CrachaPage() {
             </div>
 
             <div className="flex justify-center px-6 py-6">
-              <Avatar className="h-44 w-44 rounded-sm" size="default">
+              {/* after:hidden — o Avatar desenha um anel rounded-full no ::after
+                  que o rounded-sm nao alcanca; no escuro ele clareava e
+                  virava um circulo por cima da foto quadrada. */}
+              <Avatar
+                className="h-44 w-44 rounded-sm after:hidden"
+                size="default"
+              >
                 {fotoUrl && (
                   <AvatarImage
                     src={fotoUrl}
@@ -90,7 +110,21 @@ export default async function CrachaPage() {
         </div>
 
         <div className="flex justify-center">
-          <div className="flex w-[20rem] flex-col overflow-hidden rounded-md border border-border bg-white shadow-md">
+          <div
+            // O crachá é um cartão impresso: branco nos dois temas. Como os
+            // filhos usam tokens (text-foreground, border-border...), no escuro
+            // saíam claros sobre branco. Redeclarar os tokens claros aqui faz
+            // todo o conteúdo herdar o tema certo, sem tocar em cada elemento.
+            style={
+              {
+                "--foreground": "#1f2324",
+                "--muted-foreground": "#5b6166",
+                "--muted": "#f4f4f6",
+                "--border": "#e6e6e8",
+              } as React.CSSProperties
+            }
+            className="flex w-[20rem] flex-col overflow-hidden rounded-md border border-border bg-white text-foreground shadow-md dark:bg-[#f2efec] dark:shadow-xl dark:shadow-black/40"
+          >
             <div className="flex items-center justify-center gap-3 px-4 pb-3 pt-5">
               <p className="tracking-tight">CRACHÁ FUNCIONAL</p>
             </div>

@@ -190,14 +190,21 @@ export default async function EventoPage({ params }: Props) {
 
 function AvisoBaixaTardia() {
   return (
-    <div className="rounded-md border border-amber-300/70 dark:border-amber-800/60 bg-amber-50/60 dark:bg-amber-950/40 px-4 py-3">
-      <div className="text-xs font-bold uppercase tracking-wide text-amber-900 dark:text-amber-200">
+    // Tudo em token de identidade: `accent` já é o lavado de vermelho do app
+    // (#fff1f1 no claro), e `primary` é o vermelho da Cruz Vermelha. Assim o
+    // aviso acompanha os dois temas sem cor solta no meio do caminho.
+    <div className="relative overflow-hidden rounded-md border border-primary/30 bg-accent px-5 py-4">
+      {/* Mesma régua que marca "em aberto" na lista e no evento ao vivo. */}
+      <span
+        className="pointer-events-none absolute inset-y-0 left-0 w-[3px] bg-primary"
+        aria-hidden
+      />
+      <div className="text-[10px] font-bold uppercase tracking-wider text-primary">
         Baixa tardia
       </div>
-      <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-200/80">
-        O evento já encerrou, mas ainda há rádio em aberto. Como administrador
-        você pode lançar a devolução agora — a auditoria vai marcar que foi
-        lançamento tardio, com a data real do registro.
+      <p className="mt-1 max-w-prose text-sm text-accent-foreground/80">
+        O evento encerrou com rádio em aberto. Você pode lançar a devolução
+        agora — a auditoria registra como lançamento tardio, com a data real.
       </p>
     </div>
   );

@@ -95,7 +95,7 @@ export default async function AppLayout({
                 render={<Link href="/cracha" />}
                 nativeButton={false}
               >
-                Crachá funcional
+                Crachá Virtual
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <ThemeToggle />
