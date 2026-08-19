@@ -101,6 +101,9 @@ model Evento {
   criadoPorId Int
   criadoEm    DateTime   @default(now())
   registros   Registro[]
+
+  // Dashboard e lista filtram por período o tempo todo.
+  @@index([dataInicio, dataFim])
 }
 
 model Radio {
@@ -150,6 +153,13 @@ model Registro {
   criadoPorId       Int
   criadoEm          DateTime   @default(now())
   devolucao         Devolucao?
+
+  // Postgres não indexa FK sozinho, e o Prisma também não. Sem estes, a
+  // checagem "esse rádio está em campo?" — que roda dentro da trava do
+  // FOR UPDATE, segurando os outros operadores — varre a tabela inteira.
+  @@index([radioId])
+  @@index([eventoId])
+  @@index([recebedorId])
 }
 
 model Devolucao {

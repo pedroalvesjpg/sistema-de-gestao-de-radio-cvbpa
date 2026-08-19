@@ -42,16 +42,16 @@ export function SolicitacoesList({
   if (solicitacoes.length === 0) return null;
 
   return (
-    <section className="overflow-hidden rounded-md border border-amber-300/70 bg-amber-50/60">
-      <div className="flex items-baseline justify-between gap-4 border-b border-amber-300/70 px-4 py-2.5">
-        <span className="text-xs font-bold uppercase tracking-wide text-amber-900">
+    <section className="overflow-hidden rounded-md border border-amber-300/70 dark:border-amber-800/60 bg-amber-50/60 dark:bg-amber-950/40">
+      <div className="flex items-baseline justify-between gap-4 border-b border-amber-300/70 dark:border-amber-800/60 px-4 py-2.5">
+        <span className="text-xs font-bold uppercase tracking-wide text-amber-900 dark:text-amber-200">
           Pedidos de acesso aguardando
         </span>
-        <span className="font-mono text-xs font-bold tabular-nums text-amber-900">
+        <span className="font-mono text-xs font-bold tabular-nums text-amber-900 dark:text-amber-200">
           {solicitacoes.length}
         </span>
       </div>
-      <ul className="divide-y divide-amber-200">
+      <ul className="divide-y divide-amber-200 dark:divide-amber-900/60">
         {solicitacoes.map((s) => (
           <SolicitacaoRow key={s.id} solicitacao={s} />
         ))}

@@ -9,25 +9,53 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  BuscaForm,
+  Paginacao,
+  TAMANHO_PAGINA,
+  lerFiltros,
+} from "@/components/tabela/busca-paginacao";
 import { NovoRecebedorDialog } from "./novo-recebedor-dialog";
 import { RecebedorActionsMenu } from "./recebedor-actions-menu";
 
-export default async function RecebedoresPage() {
+type Props = { searchParams: Promise<{ q?: string; page?: string }> };
+
+export default async function RecebedoresPage({ searchParams }: Props) {
   const session = await requireUser();
   const isAdmin = session.user.role === "ADMIN";
+  const { q, page, skip } = lerFiltros(await searchParams);
 
-  const recebedores = await prisma.recebedor.findMany({
-    orderBy: { nome: "asc" },
-    select: {
-      id: true,
-      nome: true,
-      rg: true,
-      departamento: true,
-      cargo: true,
-      foneContato: true,
-      criadoEm: true,
-    },
-  });
+  const busca = { contains: q, mode: "insensitive" as const };
+  const where = q
+    ? {
+        OR: [
+          { nome: busca },
+          { rg: busca },
+          { departamento: busca },
+          { cargo: busca },
+          { foneContato: busca },
+        ],
+      }
+    : {};
+
+  const [recebedores, total] = await Promise.all([
+    prisma.recebedor.findMany({
+      where,
+      orderBy: { nome: "asc" },
+      take: TAMANHO_PAGINA,
+      skip,
+      select: {
+        id: true,
+        nome: true,
+        rg: true,
+        departamento: true,
+        cargo: true,
+        foneContato: true,
+        criadoEm: true,
+      },
+    }),
+    prisma.recebedor.count({ where }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -37,16 +65,18 @@ export default async function RecebedoresPage() {
             Recebedores
           </h1>
           <span className="font-mono text-sm font-medium tabular-nums text-muted-foreground">
-            {recebedores.length}
+            {total}
           </span>
         </div>
         <NovoRecebedorDialog />
       </div>
 
+      <BuscaForm q={q} placeholder="Nome, RG, departamento, telefone…" />
+
       {recebedores.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border py-16 text-center">
           <div className="font-display text-base font-bold">
-            Nenhum recebedor cadastrado
+            {q ? "Nenhum recebedor encontrado" : "Nenhum recebedor cadastrado"}
           </div>
           <div className="max-w-xs text-sm text-muted-foreground">
             Cadastre o primeiro recebedor pra começar a registrar saídas.
@@ -114,6 +144,8 @@ export default async function RecebedoresPage() {
           </div>
         </div>
       )}
+
+      <Paginacao page={page} total={total} q={q} rotulo="recebedor" />
     </div>
   );
 }

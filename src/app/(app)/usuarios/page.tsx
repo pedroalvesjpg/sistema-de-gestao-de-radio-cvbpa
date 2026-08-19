@@ -10,17 +10,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  BuscaForm,
+  Paginacao,
+  TAMANHO_PAGINA,
+  lerFiltros,
+} from "@/components/tabela/busca-paginacao";
 import { NovoUsuarioDialog } from "./novo-usuario-dialog";
 import { UsuarioActionsMenu } from "./usuario-actions-menu";
 import { SolicitacoesList } from "./solicitacoes-list";
 
-export default async function UsuariosPage() {
+type Props = { searchParams: Promise<{ q?: string; page?: string }> };
+
+export default async function UsuariosPage({ searchParams }: Props) {
   const session = await requireAdmin();
   const meuId = Number(session.user.id);
+  const { q, page, skip } = lerFiltros(await searchParams);
 
-  const [usuarios, solicitacoes] = await Promise.all([
+  const busca = { contains: q, mode: "insensitive" as const };
+  const where = q
+    ? { OR: [{ nome: busca }, { email: busca }, { cargo: busca }] }
+    : {};
+
+  const [usuarios, total, solicitacoes] = await Promise.all([
     prisma.user.findMany({
+      where,
       orderBy: [{ role: "asc" }, { nome: "asc" }],
+      take: TAMANHO_PAGINA,
+      skip,
       select: {
         id: true,
         nome: true,
@@ -30,6 +47,7 @@ export default async function UsuariosPage() {
         criadoEm: true,
       },
     }),
+    prisma.user.count({ where }),
     prisma.solicitacaoAcesso.findMany({
       where: { status: "PENDENTE" },
       orderBy: { criadoEm: "asc" },
@@ -51,13 +69,15 @@ export default async function UsuariosPage() {
             Usuários
           </h1>
           <span className="font-mono text-sm font-medium tabular-nums text-muted-foreground">
-            {usuarios.length}
+            {total}
           </span>
         </div>
         <NovoUsuarioDialog />
       </div>
 
       <SolicitacoesList solicitacoes={solicitacoes} />
+
+      <BuscaForm q={q} placeholder="Nome, email ou cargo…" />
 
       <div className="overflow-hidden rounded-md border border-border bg-background">
         <Table>
@@ -117,6 +137,8 @@ export default async function UsuariosPage() {
           </TableBody>
         </Table>
       </div>
+
+      <Paginacao page={page} total={total} q={q} rotulo="usuário" />
     </div>
   );
 }

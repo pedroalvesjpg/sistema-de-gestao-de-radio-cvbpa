@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { MoreVertical, RotateCcw, Unlink } from "lucide-react";
+import { MoreVertical, Pencil, RotateCcw, Unlink } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,18 +23,28 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cancelarDevolucao, desvincularRegistro } from "./actions";
+import { EditarRegistroDialog } from "./editar-registro-dialog";
+import type { RecebedorOpcao } from "./registro-form";
 
 type Registro = {
   id: number;
+  observacao: string | null;
   radio: { numeroPatrimonio: string };
-  recebedor: { nome: string };
+  recebedor: { id: number; nome: string };
   devolucao: { id: number } | null;
 };
 
 type ConfirmKind = "desvincular" | "cancelarDevolucao" | null;
 
-export function RegistroActionsMenu({ registro }: { registro: Registro }) {
+export function RegistroActionsMenu({
+  registro,
+  recebedores,
+}: {
+  registro: Registro;
+  recebedores: RecebedorOpcao[];
+}) {
   const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
+  const [editarAberto, setEditarAberto] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function runDesvincular() {
@@ -80,6 +90,11 @@ export function RegistroActionsMenu({ registro }: { registro: Registro }) {
           }
         />
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setEditarAberto(true)}>
+            <Pencil />
+            Editar registro
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           {registro.devolucao && (
             <DropdownMenuItem
               onClick={() => setConfirmKind("cancelarDevolucao")}
@@ -98,6 +113,17 @@ export function RegistroActionsMenu({ registro }: { registro: Registro }) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Montado só quando abre: o estado do formulário nasce do registro
+          atual, sem efeito ressincronizando depois. */}
+      {editarAberto && (
+        <EditarRegistroDialog
+          registro={registro}
+          recebedores={recebedores}
+          open
+          onOpenChange={setEditarAberto}
+        />
+      )}
 
       <AlertDialog
         open={confirmKind !== null}

@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { fmtDataHora, iniciais } from "@/lib/format";
 import { DevolucaoForm } from "./devolucao-form";
 import { RegistroActionsMenu } from "./registro-actions-menu";
+import type { RecebedorOpcao } from "./registro-form";
 
 type Registro = {
   id: number;
@@ -51,9 +52,11 @@ const filterLabels: Record<FilterTab, string> = {
 
 export function RadiosList({
   registros,
+  recebedores,
   podeEscrever,
 }: {
   registros: Registro[];
+  recebedores: RecebedorOpcao[];
   podeEscrever: boolean;
 }) {
   const [tab, setTab] = useState<FilterTab>("abertos");
@@ -154,6 +157,7 @@ export function RadiosList({
             <RegistroRow
               key={registro.id}
               registro={registro}
+              recebedores={recebedores}
               podeEscrever={podeEscrever}
             />
           ))}
@@ -165,9 +169,11 @@ export function RadiosList({
 
 function RegistroRow({
   registro,
+  recebedores,
   podeEscrever,
 }: {
   registro: Registro;
+  recebedores: RecebedorOpcao[];
   podeEscrever: boolean;
 }) {
   const [fotosOpen, setFotosOpen] = useState(false);
@@ -214,7 +220,9 @@ function RegistroRow({
             <DevolucaoStatus devolucao={registro.devolucao} />
           </div>
         </div>
-        {podeEscrever && <RegistroActionsMenu registro={registro} />}
+        {podeEscrever && (
+          <RegistroActionsMenu registro={registro} recebedores={recebedores} />
+        )}
       </div>
 
       <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
@@ -337,13 +345,13 @@ function DevolucaoStatus({
   }
   if (devolucao.possuiAvaria) {
     return (
-      <DotBadge dot="bg-amber-600" text="text-amber-800">
+      <DotBadge dot="bg-amber-600" text="text-amber-800 dark:text-amber-300">
         Devolvido c/ avaria
       </DotBadge>
     );
   }
   return (
-    <DotBadge dot="bg-emerald-600" text="text-emerald-800">
+    <DotBadge dot="bg-emerald-600" text="text-emerald-800 dark:text-emerald-300">
       Devolvido
     </DotBadge>
   );

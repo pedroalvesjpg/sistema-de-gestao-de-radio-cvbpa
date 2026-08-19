@@ -324,6 +324,10 @@ export async function rejeitarSolicitacao(
       decididoPorId: Number(session.user.id),
       decididoPorNome: session.user.name ?? "(sem nome)",
       motivoRecusa: motivoLimpo,
+      // Pedido recusado não vira conta, então a senha perdeu a finalidade.
+      // É bcrypt, não vaza — mas é dado pessoal guardado à toa, e some aqui
+      // em vez de esperar a política de retenção.
+      senhaHash: "",
     },
   });
 

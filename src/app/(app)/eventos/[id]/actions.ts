@@ -309,3 +309,84 @@ export async function cancelarDevolucao(registroId: number) {
   revalidatePath(`/eventos/${registro.eventoId}`);
   return { ok: true } as const;
 }
+
+type EditarRegistroInput = {
+  recebedorId: number;
+  observacao?: string;
+};
+
+/**
+ * Corrige um registro já feito sem destruí-lo. Antes, escolher o recebedor
+ * errado só tinha uma saída: desvincular — que apaga o registro e as duas
+ * fotos do bucket, obrigando o operador a refotografar RG e rádio com a
+ * pessoa já indo embora.
+ *
+ * Só mexe no que é digitado. Rádio e fotos são a prova do ato de entrega e
+ * não se editam: para trocar o rádio, o certo é desvincular e registrar de novo.
+ */
+export async function editarRegistro(
+  registroId: number,
+  input: EditarRegistroInput,
+) {
+  const session = await requireUser();
+  const isAdmin = session.user.role === "ADMIN";
+
+  const registro = await prisma.registro.findUnique({
+    where: { id: registroId },
+    include: {
+      evento: true,
+      radio: { select: { numeroPatrimonio: true } },
+      recebedor: { select: { id: true, nome: true, departamento: true } },
+    },
+  });
+  if (!registro) return { error: "Registro não encontrado." } as const;
+  if (registro.evento.dataFim < new Date() && !isAdmin) {
+    return { error: "Evento já encerrado." } as const;
+  }
+
+  const observacao = input.observacao?.trim() || null;
+
+  const novoRecebedor = await prisma.recebedor.findUnique({
+    where: { id: input.recebedorId },
+    select: { id: true, nome: true, departamento: true },
+  });
+  if (!novoRecebedor) return { error: "Recebedor não encontrado." } as const;
+
+  const mudouRecebedor = novoRecebedor.id !== registro.recebedor.id;
+  const mudouObservacao = observacao !== registro.observacao;
+  if (!mudouRecebedor && !mudouObservacao) {
+    return { ok: true, semMudanca: true } as const;
+  }
+
+  await prisma.registro.update({
+    where: { id: registroId },
+    data: { recebedorId: novoRecebedor.id, observacao },
+  });
+
+  await registrarAcao({
+    acao: "REGISTRO_EDITADO",
+    entidade: "Registro",
+    entidadeId: registroId,
+    resumo: `Editou registro de ${registro.radio.numeroPatrimonio}${
+      mudouRecebedor
+        ? ` — recebedor de ${registro.recebedor.nome} para ${novoRecebedor.nome}`
+        : " (observação)"
+    }`,
+    detalhes: {
+      eventoId: registro.eventoId,
+      antes: {
+        recebedorId: registro.recebedor.id,
+        recebedorNome: registro.recebedor.nome,
+        observacao: registro.observacao,
+      },
+      depois: {
+        recebedorId: novoRecebedor.id,
+        recebedorNome: novoRecebedor.nome,
+        observacao,
+      },
+    },
+  });
+
+  revalidatePath(`/eventos/${registro.eventoId}`);
+  return { ok: true } as const;
+}

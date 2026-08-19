@@ -102,6 +102,60 @@
   --warning-foreground: #ffffff;
 }
 
+/* Modo escuro "suave", não preto.
+ *
+ * A identidade da Cruz Vermelha é vermelho sobre branco; um fundo quase preto
+ * briga com ela. Por isso o fundo é um grafite quente (#2e2a2c, ~17% de
+ * luminosidade) em vez dos #0a0a0a de praxe — escuro o bastante para a
+ * madrugada do Círio, claro o bastante para o vermelho não parecer néon.
+ *
+ * O vermelho é o ponto delicado: um vermelho escuro o suficiente para levar
+ * texto branco (#d93b43) fica com 3.1 de contraste contra o fundo e some.
+ * A saída é o inverso — vermelho claro com texto escuro, que atende 4.68 nos
+ * dois papéis: como fundo de botão e como texto sobre o fundo da página.
+ */
+.dark {
+  --background: #2e2a2c;
+  --foreground: #f3eff0;
+  --card: #373234;
+  --card-foreground: #f3eff0;
+  --popover: #373234;
+  --popover-foreground: #f3eff0;
+  --primary: #ff5c5c;
+  --primary-foreground: #2b2729;
+  --secondary: #3d383a;
+  --secondary-foreground: #f3eff0;
+  --muted: #3d383a;
+  --muted-foreground: #b3aaad;
+  --accent: #45383a;
+  --accent-foreground: #f3eff0;
+  --destructive: #ff6b6b;
+  --destructive-foreground: #2b2729;
+  --border: #4d4749;
+  --input: #4d4749;
+  --ring: #ff5c5c;
+  --chart-1: #ff5c5c;
+  --chart-2: #7fa8d9;
+  --chart-3: #ff8a8a;
+  --chart-4: #a7afb2;
+  --chart-5: #f3eff0;
+  --sidebar: #373234;
+  --sidebar-foreground: #f3eff0;
+  --sidebar-primary: #ff5c5c;
+  --sidebar-primary-foreground: #2b2729;
+  --sidebar-accent: #45383a;
+  --sidebar-accent-foreground: #f3eff0;
+  --sidebar-border: #4d4749;
+  --sidebar-ring: #ff5c5c;
+  /* Navy segue escuro de propósito: é o painel de marca do login. */
+  --navy: #0b2547;
+  --navy-foreground: #ffffff;
+  --success: #5ec194;
+  --success-foreground: #16211c;
+  --warning: #e8a44a;
+  --warning-foreground: #251c10;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

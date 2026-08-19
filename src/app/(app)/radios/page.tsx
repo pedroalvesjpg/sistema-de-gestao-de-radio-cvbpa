@@ -9,25 +9,53 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  BuscaForm,
+  Paginacao,
+  TAMANHO_PAGINA,
+  lerFiltros,
+} from "@/components/tabela/busca-paginacao";
 import { NovoRadioDialog } from "./novo-radio-dialog";
 import { RadioActionsMenu } from "./radio-actions-menu";
 
-export default async function RadiosPage() {
+type Props = { searchParams: Promise<{ q?: string; page?: string }> };
+
+export default async function RadiosPage({ searchParams }: Props) {
   const session = await requireUser();
   const isAdmin = session.user.role === "ADMIN";
+  const { q, page, skip } = lerFiltros(await searchParams);
 
-  const radios = await prisma.radio.findMany({
-    orderBy: { numeroPatrimonio: "asc" },
-    select: {
-      id: true,
-      numeroPatrimonio: true,
-      numeroSerie: true,
-      marca: true,
-      modelo: true,
-      acessorios: true,
-      criadoEm: true,
-    },
-  });
+  const busca = { contains: q, mode: "insensitive" as const };
+  const where = q
+    ? {
+        OR: [
+          { numeroPatrimonio: busca },
+          { numeroSerie: busca },
+          { marca: busca },
+          { modelo: busca },
+          { acessorios: busca },
+        ],
+      }
+    : {};
+
+  const [radios, total] = await Promise.all([
+    prisma.radio.findMany({
+      where,
+      orderBy: { numeroPatrimonio: "asc" },
+      take: TAMANHO_PAGINA,
+      skip,
+      select: {
+        id: true,
+        numeroPatrimonio: true,
+        numeroSerie: true,
+        marca: true,
+        modelo: true,
+        acessorios: true,
+        criadoEm: true,
+      },
+    }),
+    prisma.radio.count({ where }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -37,16 +65,18 @@ export default async function RadiosPage() {
             Rádios
           </h1>
           <span className="font-mono text-sm font-medium tabular-nums text-muted-foreground">
-            {radios.length}
+            {total}
           </span>
         </div>
         <NovoRadioDialog />
       </div>
 
+      <BuscaForm q={q} placeholder="Patrimônio, série, marca, modelo…" />
+
       {radios.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border py-16 text-center">
           <div className="font-display text-base font-bold">
-            Nenhum rádio cadastrado
+            {q ? "Nenhum rádio encontrado" : "Nenhum rádio cadastrado"}
           </div>
           <div className="max-w-xs text-sm text-muted-foreground">
             Cadastre o primeiro rádio do patrimônio pra começar.
@@ -111,6 +141,8 @@ export default async function RadiosPage() {
           </div>
         </div>
       )}
+
+      <Paginacao page={page} total={total} q={q} rotulo="rádio" />
     </div>
   );
 }

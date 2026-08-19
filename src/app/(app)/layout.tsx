@@ -7,6 +7,7 @@ import { Logo } from "@/components/brand/logo";
 import { MainNav } from "@/components/nav/main-nav";
 import { MobileBottomNav } from "@/components/nav/mobile-bottom-nav";
 import { PapelBadge } from "@/components/eventos/status-badge";
+import { ThemeToggle } from "@/components/tema/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { iniciais } from "@/lib/format";
 import {
@@ -96,6 +97,8 @@ export default async function AppLayout({
               >
                 Crachá funcional
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <ThemeToggle />
               <DropdownMenuSeparator />
               <form action={logout}>
                 <DropdownMenuItem

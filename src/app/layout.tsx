@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Libre_Franklin, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/tema/theme-provider";
 import "./globals.css";
 
 const libreFranklin = Libre_Franklin({
@@ -42,13 +43,18 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
+    // next-themes escreve a classe do tema no <html> antes da hidratação;
+    // sem isto o React acusa divergência entre servidor e cliente.
     <html
       lang="pt-BR"
+      suppressHydrationWarning
       className={`${libreFranklin.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
-        <Toaster richColors position="top-right" />
+        <ThemeProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   );

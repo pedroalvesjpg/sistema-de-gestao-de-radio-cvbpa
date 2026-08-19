@@ -89,7 +89,7 @@ export default async function EventoPage({ params }: Props) {
     },
   }));
 
-  const [radios, totalRadios, recebedores] = podeRegistrarSaida
+  const [radios, totalRadios] = podeRegistrarSaida
     ? await Promise.all([
         prisma.radio.findMany({
           // Só os livres. Oferecer um rádio que está em campo só levava o
@@ -105,12 +105,17 @@ export default async function EventoPage({ params }: Props) {
           },
         }),
         prisma.radio.count(),
-        prisma.recebedor.findMany({
-          orderBy: { nome: "asc" },
-          select: { id: true, nome: true, departamento: true },
-        }),
       ])
-    : [[], 0, []];
+    : [[], 0];
+
+  // Recebedores servem também para corrigir um registro já feito, o que a
+  // coordenação pode fazer mesmo depois do evento encerrado.
+  const recebedores = podeGerenciarRegistros
+    ? await prisma.recebedor.findMany({
+        orderBy: { nome: "asc" },
+        select: { id: true, nome: true, departamento: true },
+      })
+    : [];
 
   const radiosEmCampo = totalRadios - radios.length;
 
@@ -175,6 +180,7 @@ export default async function EventoPage({ params }: Props) {
 
         <RadiosList
           registros={registrosComFoto}
+          recebedores={recebedores}
           podeEscrever={podeGerenciarRegistros}
         />
       </section>
@@ -184,11 +190,11 @@ export default async function EventoPage({ params }: Props) {
 
 function AvisoBaixaTardia() {
   return (
-    <div className="rounded-md border border-amber-300/70 bg-amber-50/60 px-4 py-3">
-      <div className="text-xs font-bold uppercase tracking-wide text-amber-900">
+    <div className="rounded-md border border-amber-300/70 dark:border-amber-800/60 bg-amber-50/60 dark:bg-amber-950/40 px-4 py-3">
+      <div className="text-xs font-bold uppercase tracking-wide text-amber-900 dark:text-amber-200">
         Baixa tardia
       </div>
-      <p className="mt-1 text-sm text-amber-900/80">
+      <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-200/80">
         O evento já encerrou, mas ainda há rádio em aberto. Como administrador
         você pode lançar a devolução agora — a auditoria vai marcar que foi
         lançamento tardio, com a data real do registro.

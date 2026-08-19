@@ -49,12 +49,35 @@ export async function uploadFoto(file: File, tipo: TipoFoto): Promise<string> {
   return path;
 }
 
+// Assinar custa uma chamada HTTP ao Supabase. O avatar do cabeçalho era
+// reassinado em TODA navegação, somando latência fixa no 4G do evento —
+// mesmo a URL valendo uma hora. Como o path muda quando a foto muda, guardar
+// por path nunca serve conteúdo velho.
+const REAPROVEITAR_POR_MS = (SIGNED_URL_TTL - 600) * 1000; // 10 min de folga
+const assinadas = new Map<string, { url: string; expiraEm: number }>();
+
+/** Some com entradas vencidas; a cada escrita, para o Map não crescer sem fim. */
+function podarAssinadas(agora: number) {
+  for (const [path, v] of assinadas) {
+    if (v.expiraEm <= agora) assinadas.delete(path);
+  }
+}
+
 // `placeholder://` marca registros pré-storage; retorna null sem assinar.
 export async function getSignedUrl(
   path: string,
   expiresIn = SIGNED_URL_TTL,
 ): Promise<string | null> {
   if (!path || path.startsWith("placeholder://")) return null;
+
+  const agora = Date.now();
+  // Só reaproveita o TTL padrão: quem pede prazo diferente quer prazo diferente.
+  const podeCachear = expiresIn === SIGNED_URL_TTL;
+  if (podeCachear) {
+    const guardada = assinadas.get(path);
+    if (guardada && guardada.expiraEm > agora) return guardada.url;
+  }
+
   const { data, error } = await client()
     .storage.from(BUCKET)
     .createSignedUrl(path, expiresIn);
@@ -62,12 +85,21 @@ export async function getSignedUrl(
     console.error("[storage] failed to sign:", path, error.message);
     return null;
   }
+
+  if (podeCachear) {
+    podarAssinadas(agora);
+    assinadas.set(path, {
+      url: data.signedUrl,
+      expiraEm: agora + REAPROVEITAR_POR_MS,
+    });
+  }
   return data.signedUrl;
 }
 
 // Silencioso em falha: auditoria já guarda o path apagado.
 export async function deleteFoto(path: string): Promise<void> {
   if (!path || path.startsWith("placeholder://")) return;
+  assinadas.delete(path);
   const { error } = await client().storage.from(BUCKET).remove([path]);
   if (error) console.error("[storage] failed to delete:", path, error.message);
 }

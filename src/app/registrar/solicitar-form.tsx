@@ -67,7 +67,7 @@ export function SolicitarForm() {
     return (
       <div className="w-full max-w-md space-y-6 rounded-md border border-border bg-background p-8 text-center sm:p-10">
         <CircleCheckBig
-          className="mx-auto size-10 text-emerald-700"
+          className="mx-auto size-10 text-emerald-700 dark:text-emerald-400"
           aria-hidden
         />
         <div className="space-y-2">

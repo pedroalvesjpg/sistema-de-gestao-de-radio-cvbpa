@@ -91,7 +91,7 @@ export function FotoUploader({
               className="h-full w-full object-cover"
             />
           ) : hasFotoServer ? (
-            <Check className="size-7 text-emerald-700" />
+            <Check className="size-7 text-emerald-700 dark:text-emerald-400" />
           ) : (
             <ImageUp className="size-7 text-muted-foreground" />
           )}

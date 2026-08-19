@@ -91,18 +91,18 @@ type Pendencia = {
 
 function PendenciasLista({ pendencias }: { pendencias: Pendencia[] }) {
   return (
-    <div className="overflow-hidden rounded-md border border-amber-300/70 bg-amber-50/60">
-      <div className="border-b border-amber-300/70 px-4 py-2.5">
-        <span className="text-xs font-bold uppercase tracking-wide text-amber-900">
+    <div className="overflow-hidden rounded-md border border-amber-300/70 dark:border-amber-800/60 bg-amber-50/60 dark:bg-amber-950/40">
+      <div className="border-b border-amber-300/70 dark:border-amber-800/60 px-4 py-2.5">
+        <span className="text-xs font-bold uppercase tracking-wide text-amber-900 dark:text-amber-200">
           Eventos encerrados com pendências
         </span>
       </div>
-      <ul className="divide-y divide-amber-200">
+      <ul className="divide-y divide-amber-200 dark:divide-amber-900/60">
         {pendencias.map((p) => (
           <li key={p.id}>
             <Link
               href={`/eventos/${p.id}`}
-              className="flex items-baseline justify-between gap-4 px-4 py-3 text-sm transition-colors hover:bg-amber-100/50"
+              className="flex items-baseline justify-between gap-4 px-4 py-3 text-sm transition-colors hover:bg-amber-100/50 dark:hover:bg-amber-900/30"
             >
               <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
                 <span className="truncate font-semibold">{p.nome}</span>
@@ -110,7 +110,7 @@ function PendenciasLista({ pendencias }: { pendencias: Pendencia[] }) {
                   encerrado em {fmtData(p.dataFim)}
                 </span>
               </div>
-              <span className="shrink-0 font-semibold tabular-nums text-amber-800">
+              <span className="shrink-0 font-semibold tabular-nums text-amber-800 dark:text-amber-300">
                 {p.registros.length} em aberto
               </span>
             </Link>
