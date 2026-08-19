@@ -13,8 +13,8 @@ type Evento = {
   nome: string;
   dataInicio: Date;
   dataFim: Date;
-  _count: { registros: number };
-  registros: { devolucao: { id: number } | null }[];
+  totalRegistros: number;
+  registrosEmAberto: number;
 };
 
 type StatusFilter = "atual" | "futuro" | "passado";
@@ -23,6 +23,13 @@ const filterLabels: Record<StatusFilter, string> = {
   atual: "Ao vivo",
   futuro: "Próximos",
   passado: "Encerrados",
+};
+
+// Operador não abre evento encerrado (a página redireciona). Mostrar a aba só
+// oferecia uma lista de portas trancadas.
+const abasPorPapel: Record<"admin" | "comum", StatusFilter[]> = {
+  admin: ["atual", "futuro", "passado"],
+  comum: ["atual", "futuro"],
 };
 
 export function EventosList({
@@ -34,6 +41,7 @@ export function EventosList({
 }) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("atual");
   const [query, setQuery] = useState("");
+  const abas = abasPorPapel[isAdmin ? "admin" : "comum"];
 
   const counts = useMemo(() => {
     const now = new Date();
@@ -76,7 +84,7 @@ export function EventosList({
       <div className="flex flex-col gap-4 border-b border-border pb-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="-mx-1 flex overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
           <div className="flex gap-6">
-            {(Object.keys(filterLabels) as StatusFilter[]).map((f) => {
+            {abas.map((f) => {
               const active = statusFilter === f;
               return (
                 <button
@@ -127,7 +135,6 @@ export function EventosList({
             <EventoRow
               key={evento.id}
               evento={evento}
-              isAdmin={isAdmin}
               first={idx === 0}
             />
           ))}
@@ -139,26 +146,20 @@ export function EventosList({
 
 function EventoRow({
   evento,
-  isAdmin,
   first,
 }: {
   evento: Evento;
-  isAdmin: boolean;
   first: boolean;
 }) {
-  const total = evento._count.registros;
-  const emAberto = evento.registros.filter((r) => !r.devolucao).length;
-  const status = statusEvento(evento);
-  const disabled = !isAdmin && status === "passado";
-  const isLive = status === "atual";
+  const total = evento.totalRegistros;
+  const emAberto = evento.registrosEmAberto;
+  const isLive = statusEvento(evento) === "atual";
 
   const content = (
     <div
       className={cn(
-        "group relative flex items-center gap-4 px-5 py-6 transition-colors sm:gap-6 sm:px-7",
+        "group relative flex items-center gap-4 px-5 py-6 transition-colors hover:bg-secondary/60 sm:gap-6 sm:px-7",
         !first && "border-t border-border",
-        !disabled && "hover:bg-secondary/60",
-        disabled && "opacity-60",
       )}
     >
       {isLive && (
@@ -183,34 +184,20 @@ function EventoRow({
 
       <div className="flex shrink-0 items-center gap-5 sm:gap-7">
         <Metric label="Saídas" value={total} />
-        {total > 0 && !disabled && (
+        {total > 0 && (
           <Metric
             label="Em aberto"
             value={emAberto}
             tone={emAberto > 0 ? "primary" : "muted"}
           />
         )}
-        {!disabled && (
-          <ChevronRight
-            className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-            aria-hidden
-          />
-        )}
+        <ChevronRight
+          className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+          aria-hidden
+        />
       </div>
     </div>
   );
-
-  if (disabled) {
-    return (
-      <li
-        aria-disabled
-        title="Eventos encerrados só ficam disponíveis para administradores."
-        className="cursor-not-allowed select-none"
-      >
-        {content}
-      </li>
-    );
-  }
 
   return (
     <li>

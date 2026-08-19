@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -100,7 +101,10 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
             {pending ? "Entrando…" : "Entrar"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Contate a coordenação para obter seus dados de acesso.
+            Ainda não tem acesso?{" "}
+            <Link href="/registrar" className="font-semibold underline">
+              Solicitar à coordenação
+            </Link>
           </p>
         </form>
       </Form>

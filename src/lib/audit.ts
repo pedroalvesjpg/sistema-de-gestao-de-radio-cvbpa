@@ -21,7 +21,9 @@ export type AcaoAudit =
   | "REGISTRO_EDITADO"
   | "REGISTRO_DESVINCULADO"
   | "DEVOLUCAO_CRIADA"
-  | "DEVOLUCAO_CANCELADA";
+  | "DEVOLUCAO_CANCELADA"
+  | "SOLICITACAO_APROVADA"
+  | "SOLICITACAO_REJEITADA";
 
 export const RotuloAcao: Record<AcaoAudit, string> = {
   USER_CRIADO: "Criou usuário",
@@ -44,15 +46,33 @@ export const RotuloAcao: Record<AcaoAudit, string> = {
   REGISTRO_DESVINCULADO: "Desvinculou rádio",
   DEVOLUCAO_CRIADA: "Marcou devolução",
   DEVOLUCAO_CANCELADA: "Cancelou devolução",
+  SOLICITACAO_APROVADA: "Aprovou pedido de acesso",
+  SOLICITACAO_REJEITADA: "Recusou pedido de acesso",
 };
 
-type EntidadeAudit =
-  | "User"
-  | "Evento"
-  | "Radio"
-  | "Recebedor"
-  | "Registro"
-  | "Devolucao";
+// Fonte única: a tela de auditoria monta o filtro a partir daqui, então
+// entidade nova nunca mais fica de fora do select por esquecimento.
+export const ENTIDADES_AUDIT = [
+  "User",
+  "Evento",
+  "Radio",
+  "Recebedor",
+  "Registro",
+  "Devolucao",
+  "SolicitacaoAcesso",
+] as const;
+
+export type EntidadeAudit = (typeof ENTIDADES_AUDIT)[number];
+
+export const RotuloEntidade: Record<EntidadeAudit, string> = {
+  User: "Usuário",
+  Evento: "Evento",
+  Radio: "Rádio",
+  Recebedor: "Recebedor",
+  Registro: "Registro",
+  Devolucao: "Devolução",
+  SolicitacaoAcesso: "Pedido de acesso",
+};
 
 type RegistrarInput = {
   acao: AcaoAudit;

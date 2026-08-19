@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SENHA_MIN } from "@/lib/schemas/auth";
 
 export const CARGO_OPCOES = [
   { value: "Diretor(a)", label: "Diretor(a)" },
@@ -10,7 +11,9 @@ export const CARGO_OPCOES = [
 export const novoUsuarioSchema = z.object({
   nome: z.string().min(1, "Informe o nome"),
   email: z.string().email("Email inválido"),
-  senha: z.string().min(6, "Senha precisa de pelo menos 6 caracteres"),
+  senha: z
+    .string()
+    .min(SENHA_MIN, `Senha precisa de pelo menos ${SENHA_MIN} caracteres`),
   role: z.enum(["ADMIN", "COMUM"]),
   cargo: z.string().min(1, "Selecione um cargo"),
 });

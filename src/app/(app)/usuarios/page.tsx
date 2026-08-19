@@ -12,22 +12,37 @@ import {
 } from "@/components/ui/table";
 import { NovoUsuarioDialog } from "./novo-usuario-dialog";
 import { UsuarioActionsMenu } from "./usuario-actions-menu";
+import { SolicitacoesList } from "./solicitacoes-list";
 
 export default async function UsuariosPage() {
   const session = await requireAdmin();
   const meuId = Number(session.user.id);
 
-  const usuarios = await prisma.user.findMany({
-    orderBy: [{ role: "asc" }, { nome: "asc" }],
-    select: {
-      id: true,
-      nome: true,
-      email: true,
-      cargo: true,
-      role: true,
-      criadoEm: true,
-    },
-  });
+  const [usuarios, solicitacoes] = await Promise.all([
+    prisma.user.findMany({
+      orderBy: [{ role: "asc" }, { nome: "asc" }],
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        cargo: true,
+        role: true,
+        criadoEm: true,
+      },
+    }),
+    prisma.solicitacaoAcesso.findMany({
+      where: { status: "PENDENTE" },
+      orderBy: { criadoEm: "asc" },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        cargo: true,
+        justificativa: true,
+        criadoEm: true,
+      },
+    }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -42,6 +57,8 @@ export default async function UsuariosPage() {
         </div>
         <NovoUsuarioDialog />
       </div>
+
+      <SolicitacoesList solicitacoes={solicitacoes} />
 
       <div className="overflow-hidden rounded-md border border-border bg-background">
         <Table>

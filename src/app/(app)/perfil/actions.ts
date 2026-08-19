@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guards";
 import { registrarAcao } from "@/lib/audit";
 import { deleteFoto } from "@/lib/storage";
+import { SENHA_MIN } from "@/lib/schemas/auth";
 
 type TrocarSenhaInput = {
   senhaAtual: string;
@@ -16,8 +17,10 @@ export async function trocarPropriaSenha(input: TrocarSenhaInput) {
   const session = await requireUser();
   const userId = Number(session.user.id);
 
-  if (input.novaSenha.length < 6) {
-    return { error: "A nova senha deve ter pelo menos 6 caracteres." } as const;
+  if (input.novaSenha.length < SENHA_MIN) {
+    return {
+      error: `A nova senha deve ter pelo menos ${SENHA_MIN} caracteres.`,
+    } as const;
   }
   if (input.novaSenha === input.senhaAtual) {
     return { error: "A nova senha precisa ser diferente da atual." } as const;

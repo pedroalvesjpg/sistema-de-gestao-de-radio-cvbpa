@@ -2,7 +2,12 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guards";
 import { fmtDataHora } from "@/lib/format";
-import { RotuloAcao, type AcaoAudit } from "@/lib/audit";
+import {
+  ENTIDADES_AUDIT,
+  RotuloAcao,
+  RotuloEntidade,
+  type AcaoAudit,
+} from "@/lib/audit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,7 +21,9 @@ import {
 
 const PAGE_SIZE = 25;
 
-const ENTIDADES = ["", "User", "Evento", "Registro", "Devolucao"] as const;
+// Derivado de `ENTIDADES_AUDIT`: antes a lista era escrita à mão aqui e tinha
+// esquecido Radio e Recebedor, que o audit já gravava desde a reformulação.
+const ENTIDADES = ["", ...ENTIDADES_AUDIT] as const;
 const ACOES = Object.keys(RotuloAcao) as AcaoAudit[];
 
 type Props = {
@@ -95,7 +102,7 @@ export default async function AuditoriaPage({ searchParams }: Props) {
         >
           {ENTIDADES.map((e) => (
             <option key={e} value={e}>
-              {e || "Toda entidade"}
+              {e ? RotuloEntidade[e] : "Toda entidade"}
             </option>
           ))}
         </select>

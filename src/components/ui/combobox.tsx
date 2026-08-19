@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -58,13 +59,20 @@ export function Combobox<T>({
     return items.filter((i) => getSearchText(i).toLowerCase().includes(q));
   }, [items, query, getSearchText]);
 
+  // A busca é zerada em quem fecha, não num efeito que observa `open`:
+  // limpar estado dentro de efeito dispara render em cascata.
+  const fechar = useCallback(() => {
+    setOpen(false);
+    setQuery("");
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     function onDown(e: MouseEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!rootRef.current?.contains(e.target as Node)) fechar();
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") fechar();
     }
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
@@ -72,11 +80,7 @@ export function Combobox<T>({
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) setQuery("");
-  }, [open]);
+  }, [open, fechar]);
 
   return (
     <div ref={rootRef} className="relative">
@@ -84,7 +88,13 @@ export function Combobox<T>({
         type="button"
         id={triggerId}
         disabled={disabled}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          if (open) fechar();
+          else {
+            setQuery("");
+            setOpen(true);
+          }
+        }}
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
@@ -139,7 +149,7 @@ export function Combobox<T>({
                       type="button"
                       onClick={() => {
                         onChange(key);
-                        setOpen(false);
+                        fechar();
                       }}
                       className={cn(
                         "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors",

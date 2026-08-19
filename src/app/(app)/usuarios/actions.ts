@@ -7,6 +7,7 @@ import type { Role } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guards";
 import { registrarAcao } from "@/lib/audit";
+import { SENHA_MIN } from "@/lib/schemas/auth";
 
 const ROLES: readonly Role[] = ["ADMIN", "COMUM"];
 
@@ -28,8 +29,10 @@ export async function criarUsuario(input: CriarUsuarioInput) {
 
   if (!nome) return { error: "Nome obrigatório." } as const;
   if (!email) return { error: "Email obrigatório." } as const;
-  if (senha.length < 6) {
-    return { error: "Senha deve ter pelo menos 6 caracteres." } as const;
+  if (senha.length < SENHA_MIN) {
+    return {
+      error: `Senha deve ter pelo menos ${SENHA_MIN} caracteres.`,
+    } as const;
   }
   if (!ROLES.includes(input.role)) {
     return { error: "Papel inválido." } as const;
@@ -117,8 +120,10 @@ export async function editarUsuario(userId: number, input: EditarUsuarioInput) {
 export async function resetarSenhaUsuario(userId: number, novaSenha: string) {
   await requireAdmin();
 
-  if (novaSenha.length < 6) {
-    return { error: "Senha deve ter pelo menos 6 caracteres." } as const;
+  if (novaSenha.length < SENHA_MIN) {
+    return {
+      error: `Senha deve ter pelo menos ${SENHA_MIN} caracteres.`,
+    } as const;
   }
 
   const user = await prisma.user.findUnique({
@@ -211,6 +216,129 @@ export async function deletarUsuario(userId: number) {
     entidadeId: userId,
     resumo: `Excluiu ${user.nome} (${user.email})`,
     detalhes: user,
+  });
+
+  revalidatePath("/usuarios");
+  return { ok: true } as const;
+}
+
+/**
+ * Aprova um pedido de acesso: cria o `User` reaproveitando a senha que a
+ * própria pessoa escolheu ao pedir, então ela entra sem ninguém combinar
+ * senha por fora. Tudo numa transação — pedido marcado e conta criada juntos,
+ * ou nada.
+ */
+export async function aprovarSolicitacao(solicitacaoId: number, role: Role) {
+  const session = await requireAdmin();
+
+  if (!ROLES.includes(role)) {
+    return { error: "Papel inválido." } as const;
+  }
+
+  const pedido = await prisma.solicitacaoAcesso.findUnique({
+    where: { id: solicitacaoId },
+  });
+  if (!pedido) return { error: "Pedido não encontrado." } as const;
+  if (pedido.status !== "PENDENTE") {
+    return { error: "Esse pedido já foi avaliado." } as const;
+  }
+
+  let novoId: number;
+  try {
+    novoId = await prisma.$transaction(async (tx) => {
+      const criado = await tx.user.create({
+        data: {
+          nome: pedido.nome,
+          email: pedido.email,
+          senhaHash: pedido.senhaHash,
+          cargo: pedido.cargo,
+          role,
+        },
+        select: { id: true },
+      });
+
+      await tx.solicitacaoAcesso.update({
+        where: { id: solicitacaoId },
+        data: {
+          status: "APROVADA",
+          decididoEm: new Date(),
+          decididoPorId: Number(session.user.id),
+          decididoPorNome: session.user.name ?? "(sem nome)",
+        },
+      });
+
+      return criado.id;
+    });
+  } catch (e) {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002"
+    ) {
+      return {
+        error: "Já existe um usuário com esse email — o pedido virou duplicado.",
+      } as const;
+    }
+    throw e;
+  }
+
+  await registrarAcao({
+    acao: "SOLICITACAO_APROVADA",
+    entidade: "SolicitacaoAcesso",
+    entidadeId: solicitacaoId,
+    resumo: `Aprovou acesso de ${pedido.nome} (${pedido.email}) como ${role === "ADMIN" ? "Administrador" : "Operador"}`,
+    detalhes: {
+      usuarioCriadoId: novoId,
+      nome: pedido.nome,
+      email: pedido.email,
+      cargo: pedido.cargo,
+      role,
+      justificativa: pedido.justificativa,
+    },
+  });
+
+  revalidatePath("/usuarios");
+  return { ok: true } as const;
+}
+
+export async function rejeitarSolicitacao(
+  solicitacaoId: number,
+  motivo?: string,
+) {
+  const session = await requireAdmin();
+
+  const pedido = await prisma.solicitacaoAcesso.findUnique({
+    where: { id: solicitacaoId },
+    select: { nome: true, email: true, status: true, justificativa: true },
+  });
+  if (!pedido) return { error: "Pedido não encontrado." } as const;
+  if (pedido.status !== "PENDENTE") {
+    return { error: "Esse pedido já foi avaliado." } as const;
+  }
+
+  const motivoLimpo = motivo?.trim() || null;
+
+  await prisma.solicitacaoAcesso.update({
+    where: { id: solicitacaoId },
+    data: {
+      status: "REJEITADA",
+      decididoEm: new Date(),
+      decididoPorId: Number(session.user.id),
+      decididoPorNome: session.user.name ?? "(sem nome)",
+      motivoRecusa: motivoLimpo,
+    },
+  });
+
+  await registrarAcao({
+    acao: "SOLICITACAO_REJEITADA",
+    entidade: "SolicitacaoAcesso",
+    entidadeId: solicitacaoId,
+    resumo: `Recusou acesso de ${pedido.nome} (${pedido.email})`,
+    detalhes: {
+      nome: pedido.nome,
+      email: pedido.email,
+      justificativa: pedido.justificativa,
+      motivoRecusa: motivoLimpo,
+    },
   });
 
   revalidatePath("/usuarios");

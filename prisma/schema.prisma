@@ -22,12 +22,57 @@ model User {
   fotoPerfilUrl String?
   criadoEm      DateTime @default(now())
 
-  eventosCriados     Evento[]
-  registrosCriados   Registro[]
-  devolucoesCriadas  Devolucao[]
-  radiosCriados      Radio[]
-  recebedoresCriados Recebedor[]
-  auditLogs          AuditLog[]
+  eventosCriados       Evento[]
+  registrosCriados     Registro[]
+  devolucoesCriadas    Devolucao[]
+  radiosCriados        Radio[]
+  recebedoresCriados   Recebedor[]
+  auditLogs            AuditLog[]
+  solicitacoesDecididas SolicitacaoAcesso[]
+}
+
+enum StatusSolicitacao {
+  PENDENTE
+  APROVADA
+  REJEITADA
+}
+
+// Pedido de acesso de quem ainda não tem conta. A pessoa escolhe a própria
+// senha no pedido (guardada já com hash) para poder entrar assim que a
+// coordenação aprovar — sem ninguém ter que combinar senha por fora.
+// Vira `User` só na aprovação; até lá não existe conta nenhuma.
+model SolicitacaoAcesso {
+  id            Int               @id @default(autoincrement())
+  nome          String
+  email         String
+  senhaHash     String
+  cargo         String?
+  justificativa String?
+  status        StatusSolicitacao @default(PENDENTE)
+  criadoEm      DateTime          @default(now())
+  decididoEm    DateTime?
+  decididoPor   User?             @relation(fields: [decididoPorId], references: [id], onDelete: SetNull)
+  decididoPorId Int?
+  // Snapshot: sobrevive à deleção de quem decidiu, como no AuditLog.
+  decididoPorNome String?
+  motivoRecusa  String?
+
+  // Sem @unique em email: pedido recusado pode ser refeito depois. A regra de
+  // "um pendente por email" é validada na action.
+  @@index([status, criadoEm])
+  @@index([email])
+}
+
+// Força bruta no login. Guardado no banco porque a app roda em serverless —
+// contador em memória não sobrevive entre instâncias.
+model TentativaLogin {
+  id       Int      @id @default(autoincrement())
+  // Email normalizado ("email:foo@x") ou IP ("ip:1.2.3.4"): limitamos os dois,
+  // senão quem espalha tentativas por vários emails escapa do limite.
+  chave    String
+  criadoEm DateTime @default(now())
+
+  @@index([chave, criadoEm])
 }
 
 // Imutável; sobrevive à deleção do ator (FK SetNull + snapshot do nome).

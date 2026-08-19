@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
@@ -58,6 +58,13 @@ export function DevolucaoForm({
   const form = useForm<DevolucaoValues>({
     resolver: zodResolver(devolucaoSchema),
     defaultValues: defaults,
+  });
+
+  // `form.watch()` no corpo do render não é memoizável; `useWatch` inscreve
+  // só neste campo e re-renderiza apenas quando ele muda.
+  const devolvidoPorOutra = useWatch({
+    control: form.control,
+    name: "devolvidoOutraPessoa",
   });
 
   function onSubmit(values: DevolucaoValues) {
@@ -150,7 +157,7 @@ export function DevolucaoForm({
               )}
             />
 
-            {form.watch("devolvidoOutraPessoa") && (
+            {devolvidoPorOutra && (
               <FormField
                 name="devolvidoPor"
                 control={form.control}

@@ -2,8 +2,15 @@ import NextAuth, { type Session } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { ZodError } from "zod";
-import { signInSchema } from "@/lib/zod";
+import { loginSchema } from "@/lib/schemas/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  chavesDeTentativa,
+  excedeuTentativas,
+  ipDaRequisicao,
+  limparTentativas,
+  registrarTentativa,
+} from "@/lib/rate-limit";
 
 // O papel mora no JWT, que dura 30 dias. Sem revalidar, rebaixar ou excluir
 // alguém só faria efeito no próximo login. Conferimos no banco, mas espaçado:
@@ -22,14 +29,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       authorize: async (credentials) => {
         try {
-          const { email, password } = await signInSchema.parseAsync(credentials);
+          const { email, password } = await loginSchema.parseAsync(credentials);
+
+          // O freio mora aqui, e não só na server action do formulário: este
+          // endpoint é público e pode ser chamado direto, sem passar pela tela.
+          const chaves = chavesDeTentativa(email, await ipDaRequisicao());
+          if (await excedeuTentativas(chaves)) return null;
 
           const user = await prisma.user.findUnique({ where: { email } });
-          if (!user) return null;
+          const ok = user ? await compare(password, user.senhaHash) : false;
 
-          const ok = await compare(password, user.senhaHash);
-          if (!ok) return null;
+          if (!user || !ok) {
+            await registrarTentativa(chaves);
+            return null;
+          }
 
+          await limparTentativas(chaves);
           return {
             id: user.id.toString(),
             name: user.nome,
