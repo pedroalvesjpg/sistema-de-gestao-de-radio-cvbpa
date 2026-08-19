@@ -292,7 +292,6 @@ export async function aprovarSolicitacao(solicitacaoId: number, role: Role) {
       email: pedido.email,
       cargo: pedido.cargo,
       role,
-      justificativa: pedido.justificativa,
     },
   });
 
@@ -308,7 +307,7 @@ export async function rejeitarSolicitacao(
 
   const pedido = await prisma.solicitacaoAcesso.findUnique({
     where: { id: solicitacaoId },
-    select: { nome: true, email: true, status: true, justificativa: true },
+    select: { nome: true, email: true, status: true },
   });
   if (!pedido) return { error: "Pedido não encontrado." } as const;
   if (pedido.status !== "PENDENTE") {
@@ -336,7 +335,6 @@ export async function rejeitarSolicitacao(
     detalhes: {
       nome: pedido.nome,
       email: pedido.email,
-      justificativa: pedido.justificativa,
       motivoRecusa: motivoLimpo,
     },
   });

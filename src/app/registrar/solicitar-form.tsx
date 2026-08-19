@@ -9,7 +9,6 @@ import { CircleCheckBig } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import {
   Form,
@@ -42,7 +41,6 @@ const defaults: SolicitacaoValues = {
   senha: "",
   confirmar: "",
   cargo: "",
-  justificativa: "",
 };
 
 export function SolicitarForm() {
@@ -200,26 +198,6 @@ export function SolicitarForm() {
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="justificativa"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Quem é você na equipe? (opcional)</FormLabel>
-                <FormControl>
-                  <Textarea
-                    rows={2}
-                    placeholder="Ex: voluntário da radiocomunicação, indicado pelo Célio"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Ajuda a coordenação a reconhecer você e aprovar mais rápido.
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

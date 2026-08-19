@@ -38,7 +38,6 @@ export default async function UsuariosPage() {
         nome: true,
         email: true,
         cargo: true,
-        justificativa: true,
         criadoEm: true,
       },
     }),

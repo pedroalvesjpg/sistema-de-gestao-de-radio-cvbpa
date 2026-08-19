@@ -31,7 +31,6 @@ export type Solicitacao = {
   nome: string;
   email: string;
   cargo: string | null;
-  justificativa: string | null;
   criadoEm: Date;
 };
 
@@ -80,11 +79,6 @@ function SolicitacaoRow({ solicitacao }: { solicitacao: Solicitacao }) {
             {fmtDataHora(solicitacao.criadoEm)}
           </span>
         </div>
-        {solicitacao.justificativa && (
-          <p className="max-w-prose text-sm text-foreground/80">
-            “{solicitacao.justificativa}”
-          </p>
-        )}
       </div>
 
       <div className="flex shrink-0 gap-2">

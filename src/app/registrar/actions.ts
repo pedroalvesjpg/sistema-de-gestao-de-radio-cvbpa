@@ -23,7 +23,6 @@ export async function solicitarAcesso(input: SolicitacaoValues) {
   const nome = input.nome.trim();
   const email = input.email.trim().toLowerCase();
   const cargo = input.cargo.trim() || null;
-  const justificativa = input.justificativa?.trim() || null;
 
   if (!nome) return { error: "Informe seu nome completo." } as const;
   if (!email) return { error: "Informe seu email." } as const;
@@ -58,7 +57,7 @@ export async function solicitarAcesso(input: SolicitacaoValues) {
 
   const senhaHash = await hash(input.senha, 10);
   await prisma.solicitacaoAcesso.create({
-    data: { nome, email, senhaHash, cargo, justificativa },
+    data: { nome, email, senhaHash, cargo },
   });
 
   // Conta como tentativa: sem isso o freio não alcança quem despeja pedidos.

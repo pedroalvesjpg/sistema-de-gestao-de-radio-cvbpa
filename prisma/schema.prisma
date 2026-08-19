@@ -47,7 +47,6 @@ model SolicitacaoAcesso {
   email         String
   senhaHash     String
   cargo         String?
-  justificativa String?
   status        StatusSolicitacao @default(PENDENTE)
   criadoEm      DateTime          @default(now())
   decididoEm    DateTime?

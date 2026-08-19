@@ -10,7 +10,6 @@ export const solicitacaoSchema = z
     senha: z.string().min(SENHA_MIN, `Pelo menos ${SENHA_MIN} caracteres`),
     confirmar: z.string().min(1, "Confirme a senha"),
     cargo: z.string().min(1, "Selecione seu cargo"),
-    justificativa: z.string().optional(),
   })
   .refine((v) => v.senha === v.confirmar, {
     message: "As senhas não coincidem",
