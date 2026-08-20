@@ -25,12 +25,10 @@ const filterLabels: Record<StatusFilter, string> = {
   passado: "Encerrados",
 };
 
-// Operador não abre evento encerrado (a página redireciona). Mostrar a aba só
-// oferecia uma lista de portas trancadas.
-const abasPorPapel: Record<"admin" | "comum", StatusFilter[]> = {
-  admin: ["atual", "futuro", "passado"],
-  comum: ["atual", "futuro"],
-};
+// Encerrado é leitura para todo mundo — o operador não escreve nele, mas vê o
+// que aconteceu (transparência e auditoria). Fora de evento, é também a única
+// coisa que a home tem para mostrar.
+const abas: StatusFilter[] = ["atual", "futuro", "passado"];
 
 export function EventosList({
   eventos,
@@ -39,9 +37,17 @@ export function EventosList({
   eventos: Evento[];
   isAdmin: boolean;
 }) {
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("atual");
+  // Abrir sempre em "Ao vivo" deixava a home vazia nos meses sem evento, com o
+  // histórico escondido atrás de uma aba que ninguém clicava. Começa na
+  // primeira aba que tem algo.
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(() => {
+    const now = new Date();
+    return (
+      abas.find((f) => eventos.some((e) => statusEvento(e, now) === f)) ??
+      "atual"
+    );
+  });
   const [query, setQuery] = useState("");
-  const abas = abasPorPapel[isAdmin ? "admin" : "comum"];
 
   const counts = useMemo(() => {
     const now = new Date();

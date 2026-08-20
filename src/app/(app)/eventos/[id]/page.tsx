@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { CalendarDays } from "lucide-react";
+import { notFound } from "next/navigation";
+import { CalendarDays, Lock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guards";
 import { fmtData, statusEvento } from "@/lib/format";
@@ -52,9 +52,11 @@ export default async function EventoPage({ params }: Props) {
   if (!evento) notFound();
 
   const status = statusEvento(evento);
-  if (!isAdmin && status === "passado") redirect("/");
-
   const encerrado = status === "passado";
+  // Operador entra em evento encerrado, mas só lê — é o histórico da operação,
+  // e esconder isso dele não protegia nada: só deixava a home vazia fora de
+  // evento. A escrita continua barrada aqui e nas server actions.
+  const somenteLeitura = encerrado && !isAdmin;
   // Saída nova só em evento aberto — `criarRegistro` recusa em qualquer caso.
   const podeRegistrarSaida = !encerrado;
   // Fechar pendência (devolver, desvincular, cancelar) continua liberado para a
@@ -174,6 +176,7 @@ export default async function EventoPage({ params }: Props) {
           )}
         </div>
 
+        {somenteLeitura && <AvisoSomenteLeitura emAberto={emAberto} />}
         {encerrado && isAdmin && emAberto > 0 && <AvisoBaixaTardia />}
 
         <RadiosList
@@ -182,6 +185,28 @@ export default async function EventoPage({ params }: Props) {
           podeEscrever={podeGerenciarRegistros}
         />
       </section>
+    </div>
+  );
+}
+
+function AvisoSomenteLeitura({ emAberto }: { emAberto: number }) {
+  return (
+    <div className="flex gap-3 rounded-md border border-border bg-secondary/40 px-5 py-4">
+      <Lock
+        className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+        aria-hidden
+      />
+      <div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          Somente leitura
+        </div>
+        <p className="mt-1 max-w-prose text-sm text-muted-foreground">
+          Evento encerrado. O histórico fica aqui para consulta, mas não é mais
+          possível registrar saída nem devolução.
+          {emAberto > 0 &&
+            " Se um rádio voltou depois do evento, peça a um administrador para lançar a devolução."}
+        </p>
+      </div>
     </div>
   );
 }

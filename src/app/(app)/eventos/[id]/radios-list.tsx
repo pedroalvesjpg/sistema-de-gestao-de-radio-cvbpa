@@ -59,7 +59,24 @@ export function RadiosList({
   recebedores: RecebedorOpcao[];
   podeEscrever: boolean;
 }) {
-  const [tab, setTab] = useState<FilterTab>("abertos");
+  // Quem pode escrever abre em "Em aberto": é a fila de trabalho, e ela precisa
+  // continuar sendo o destino depois de registrar uma saída nova. Na leitura de
+  // um evento encerrado não há fila — aí abre no que de fato tem conteúdo, em
+  // vez de receber um "nenhum rádio encontrado" com o histórico ao lado.
+  const [tab, setTab] = useState<FilterTab>(() => {
+    if (podeEscrever) return "abertos";
+    const temConteudo = (f: FilterTab) =>
+      registros.some((r) =>
+        f === "abertos"
+          ? !r.devolucao
+          : f === "avarias"
+            ? r.devolucao?.possuiAvaria
+            : r.devolucao && !r.devolucao.possuiAvaria,
+      );
+    return (
+      (Object.keys(filterLabels) as FilterTab[]).find(temConteudo) ?? "abertos"
+    );
+  });
   const [query, setQuery] = useState("");
 
   const filtrados = useMemo(() => {
