@@ -74,9 +74,7 @@ export default async function EventoPage({ params }: Props) {
   );
   const fotoUrlByPath = new Map(
     await Promise.all(
-      fotoPaths.map(
-        async (p) => [p, await getSignedUrl(p)] as const,
-      ),
+      fotoPaths.map(async (p) => [p, await getSignedUrl(p)] as const),
     ),
   );
   const registrosComFoto = evento.registros.map((r) => ({
@@ -203,8 +201,8 @@ function AvisoBaixaTardia() {
         Baixa tardia
       </div>
       <p className="mt-1 max-w-prose text-sm text-accent-foreground/80">
-        O evento encerrou com rádio em aberto. Você pode lançar a devolução
-        agora — a auditoria registra como lançamento tardio, com a data real.
+        ATENÇÃO: O evento encerrou com rádio em aberto. Ainda é possível
+        registrar a devolução, mas vai ser registrada como lançamento tardio.
       </p>
     </div>
   );
