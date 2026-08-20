@@ -156,10 +156,6 @@ function AprovarDialog({
               <SelectItem value="ADMIN">Administrador</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
-            A conta é criada com a senha que a própria pessoa cadastrou no
-            pedido — ela já consegue entrar.
-          </p>
         </div>
 
         <DialogFooter>

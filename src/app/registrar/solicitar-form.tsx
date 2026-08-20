@@ -178,8 +178,7 @@ export function SolicitarForm() {
                   />
                 </FormControl>
                 <FormDescription>
-                  Mínimo de {SENHA_MIN} caracteres. É com ela que você vai
-                  entrar depois de aprovado.
+                  Mínimo de {SENHA_MIN} caracteres.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
